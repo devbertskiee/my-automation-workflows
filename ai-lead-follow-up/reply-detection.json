@@ -1,0 +1,670 @@
+{
+  "name": "Reply Detection",
+  "nodes": [
+    {
+      "parameters": {
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyX",
+              "value": 30,
+              "unit": "minutes"
+            }
+          ]
+        },
+        "filters": {
+          "includeSpamTrash": false,
+          "q": "in:inbox -category:social -category:promotions",
+          "readStatus": "both"
+        }
+      },
+      "type": "n8n-nodes-base.gmailTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        -432,
+        -144
+      ],
+      "id": "c1e4d8af-3f08-46c1-9e08-4999b5424516",
+      "name": "Trigger — New Email",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "vbsKC01G32vSea05",
+          "name": "Gmail account"
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "const fromHeader = $json.from || $json.From || '';\nconst match = fromHeader.match(/<(.+?)>/);\nreturn { email: match ? match[1] : fromHeader.trim() };"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -208,
+        -144
+      ],
+      "id": "0b7aa349-c798-45a4-aedc-3493e53e2af2",
+      "name": "Code — Extract Sender Email"
+    },
+    {
+      "parameters": {
+        "operation": "search",
+        "base": {
+          "__rl": true,
+          "value": "appCKBJvU3bS9yyPH",
+          "mode": "list",
+          "cachedResultName": "AI Lead Follow-Up Engine",
+          "cachedResultUrl": "https://airtable.com/[airtable-link]"
+        },
+        "table": {
+          "__rl": true,
+          "value": "tblnUCHMTzOYTepnn",
+          "mode": "list",
+          "cachedResultName": "Leads",
+          "cachedResultUrl": "https://airtable.com/[airtable-link]"
+        },
+        "filterByFormula": "=AND({Email} = \"{{ $json.email }}\",   {Status} = \"Active\" )",
+        "returnAll": false,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.2,
+      "position": [
+        16,
+        -144
+      ],
+      "id": "b0d37055-40d1-436c-8e68-ad20012336e1",
+      "name": "Airtable — Find Active Lead",
+      "credentials": {
+        "airtableTokenApi": {
+          "id": "NR1xkV4v79dyV7IW",
+          "name": "Airtable Personal Access Token account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "f23700a6-0e7b-486c-a552-238142040f00",
+              "leftValue": "={{ $json.id}}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        240,
+        -144
+      ],
+      "id": "ad5e5f0d-a955-425c-bfe8-25001f38ad99",
+      "name": "IF — Active Lead Found?"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "a0da24d0-723f-49dc-8809-39fd1563518b",
+              "name": "recordId",
+              "value": "={{ $json.id }}",
+              "type": "string"
+            },
+            {
+              "id": "44c56371-4841-4735-9973-904c9c9a40ce",
+              "name": "status",
+              "value": "Replied",
+              "type": "string"
+            },
+            {
+              "id": "b7656644-340c-4ef7-abec-4878081885b8",
+              "name": "nextStep",
+              "value": "Done",
+              "type": "string"
+            },
+            {
+              "id": "0a4419de-348d-4147-a6b5-ea634fe2a231",
+              "name": "repliedAt",
+              "value": "={{ $now.toISO() }}",
+              "type": "string"
+            },
+            {
+              "id": "894aaacf-d2f9-4f9e-b12a-7d10934363ed",
+              "name": "name",
+              "value": "={{ $('Airtable — Find Active Lead').item.json.fields.Name }}",
+              "type": "string"
+            },
+            {
+              "id": "c943fd08-bce4-4e45-9d06-b477f4dd4431",
+              "name": "email",
+              "value": "={{ $('Airtable — Find Active Lead').item.json.fields.Email }}",
+              "type": "string"
+            },
+            {
+              "id": "6e0489ea-d1cd-4975-adb7-a85512e1fd47",
+              "name": "score",
+              "value": "={{ $('Airtable — Find Active Lead').item.json.fields.Score }}",
+              "type": "number"
+            },
+            {
+              "id": "d09df6fe-b51d-4dd4-a5b4-e3fc295b4eca",
+              "name": "sequence",
+              "value": "={{ $('Airtable — Find Active Lead').item.json.fields.Sequence }}",
+              "type": "string"
+            },
+            {
+              "id": "67b6a8ab-b875-47cf-8cb7-a41f511f0839",
+              "name": "lastEmailSent",
+              "value": "={{ $('Airtable — Find Active Lead').item.json.fields['Last Email Sent'] }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        464,
+        -144
+      ],
+      "id": "65007d48-d4ce-4993-b99b-b5467f6b13ba",
+      "name": "Set — Mark as Replied"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://hooks.slack.com/services/[request-url]",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"text\": \"*💬 Lead Replied*\\n*Name:* {{ $('Set — Mark as Replied').item.json.name}}\\n*Email:* {{ $('Set — Mark as Replied').item.json.email }}\\n*Score:* {{ $(\"Set — Mark as Replied\").item.json.score }}/10\\n*Sequence:* {{ $(\"Set — Mark as Replied\").item.json.sequence }}\\n*Last Email Sent:* {{ $(\"Set — Mark as Replied\").item.json.lastEmailSent }}\\n*Action:* Review reply and respond manually.\"\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        912,
+        -144
+      ],
+      "id": "3d4bbffa-762b-44ec-afcf-49009e6d2db9",
+      "name": "Slack — Lead Replied"
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "base": {
+          "__rl": true,
+          "value": "appCKBJvU3bS9yyPH",
+          "mode": "list",
+          "cachedResultName": "AI Lead Follow-Up Engine",
+          "cachedResultUrl": "https://airtable.com/[airtable-link]"
+        },
+        "table": {
+          "__rl": true,
+          "value": "tblnUCHMTzOYTepnn",
+          "mode": "list",
+          "cachedResultName": "Leads",
+          "cachedResultUrl": "https://airtable.com/[airtable-link]"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "id": "={{ $json.recordId }}",
+            "Next Step": "={{ $json.nextStep }}",
+            "Status": "={{ $json.status }}",
+            "Replied At": "={{ $json.repliedAt }}",
+            "Next Email At": "={{ null }}"
+          },
+          "matchingColumns": [
+            "id"
+          ],
+          "schema": [
+            {
+              "id": "id",
+              "displayName": "id",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": false
+            },
+            {
+              "id": "Name",
+              "displayName": "Name",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Email",
+              "displayName": "Email",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Phone",
+              "displayName": "Phone",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Service Interest",
+              "displayName": "Service Interest",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Budget Range",
+              "displayName": "Budget Range",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "options",
+              "options": [
+                {
+                  "name": "$500–$1k",
+                  "value": "$500–$1k"
+                },
+                {
+                  "name": "$1k–$2.5k",
+                  "value": "$1k–$2.5k"
+                },
+                {
+                  "name": "$2.5k+",
+                  "value": "$2.5k+"
+                }
+              ],
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Timeline",
+              "displayName": "Timeline",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "options",
+              "options": [
+                {
+                  "name": "This week",
+                  "value": "This week"
+                },
+                {
+                  "name": "This month",
+                  "value": "This month"
+                },
+                {
+                  "name": "Just exploring",
+                  "value": "Just exploring"
+                }
+              ],
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Message",
+              "displayName": "Message",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Score",
+              "displayName": "Score",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Score Reason",
+              "displayName": "Score Reason",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Urgency",
+              "displayName": "Urgency",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "options",
+              "options": [
+                {
+                  "name": "High",
+                  "value": "High"
+                },
+                {
+                  "name": "Medium",
+                  "value": "Medium"
+                },
+                {
+                  "name": "Low",
+                  "value": "Low"
+                }
+              ],
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Sequence",
+              "displayName": "Sequence",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "options",
+              "options": [
+                {
+                  "name": "Hot",
+                  "value": "Hot"
+                },
+                {
+                  "name": "Nurture",
+                  "value": "Nurture"
+                }
+              ],
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Status",
+              "displayName": "Status",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "options",
+              "options": [
+                {
+                  "name": "Prospect",
+                  "value": "Prospect"
+                },
+                {
+                  "name": "Active",
+                  "value": "Active"
+                },
+                {
+                  "name": "Replied",
+                  "value": "Replied"
+                },
+                {
+                  "name": "Closed",
+                  "value": "Closed"
+                },
+                {
+                  "name": "Cold",
+                  "value": "Cold"
+                }
+              ],
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Emails Sent",
+              "displayName": "Emails Sent",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Last Email Sent",
+              "displayName": "Last Email Sent",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "dateTime",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Next Step",
+              "displayName": "Next Step",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "options",
+              "options": [
+                {
+                  "name": "Email 1",
+                  "value": "Email 1"
+                },
+                {
+                  "name": "Email 2",
+                  "value": "Email 2"
+                },
+                {
+                  "name": "Email 3",
+                  "value": "Email 3"
+                },
+                {
+                  "name": "Email 4",
+                  "value": "Email 4"
+                },
+                {
+                  "name": "Done",
+                  "value": "Done"
+                }
+              ],
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Replied At",
+              "displayName": "Replied At",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "dateTime",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Created At",
+              "displayName": "Created At",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Next Email At",
+              "displayName": "Next Email At",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "dateTime",
+              "readOnly": false,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {
+          "typecast": true
+        }
+      },
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.2,
+      "position": [
+        688,
+        -144
+      ],
+      "id": "631673f8-d2a7-4198-843c-91ae835c45d3",
+      "name": "Airtable — Update Lead Record",
+      "credentials": {
+        "airtableTokenApi": {
+          "id": "NR1xkV4v79dyV7IW",
+          "name": "Airtable Personal Access Token account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "",
+        "height": 464,
+        "width": 1680,
+        "color": 2
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -528,
+        -304
+      ],
+      "id": "a4175b5b-12e4-44c2-bd1e-b8a75ed0c645",
+      "name": "Sticky Note"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Trigger — New Email": {
+      "main": [
+        [
+          {
+            "node": "Code — Extract Sender Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code — Extract Sender Email": {
+      "main": [
+        [
+          {
+            "node": "Airtable — Find Active Lead",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Airtable — Find Active Lead": {
+      "main": [
+        [
+          {
+            "node": "IF — Active Lead Found?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF — Active Lead Found?": {
+      "main": [
+        [
+          {
+            "node": "Set — Mark as Replied",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set — Mark as Replied": {
+      "main": [
+        [
+          {
+            "node": "Airtable — Update Lead Record",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Airtable — Update Lead Record": {
+      "main": [
+        [
+          {
+            "node": "Slack — Lead Replied",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "timeSavedMode": "fixed",
+    "errorWorkflow": "BnEBdfPRvrSZQNmQ",
+    "callerPolicy": "workflowsFromSameOwner",
+    "availableInMCP": false
+  },
+  "versionId": "e1efeb66-4006-4a92-9679-a332c7e909e1",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "50824c1af21bce57a98040904ff7ba425e52c902ff76f6105944f37b79b0806c"
+  },
+  "nodeGroups": [],
+  "id": "CALqR9S7axJIgsVc",
+  "tags": []
+}

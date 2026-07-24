@@ -1,0 +1,1723 @@
+{
+  "name": "Cleaning Bee Intake Engine",
+  "nodes": [
+    {
+      "parameters": {
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyMinute"
+            }
+          ]
+        },
+        "simple": false,
+        "maxResults": 1,
+        "filters": {
+          "readStatus": "unread"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmailTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        -1664,
+        -1232
+      ],
+      "id": "ab0ce3c6-8a71-4b88-a87e-e85b7aad190a",
+      "name": "Watch Lead Emails",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "vbsKC01G32vSea05",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Analyze the email below and return ONLY this JSON object with no other text, no markdown, no code fences:\n\n{\n  \"isValidLead\": true or false,\n  \"customer_name\": \"extracted name or null\",\n  \"customer_email\": \"extracted email or null\",\n  \"requested_service\": \"standard | deep | move-in/out | unknown\",\n  \"urgency\": \"emergency | urgent | normal | flexible\",\n  \"summary\": \"one sentence summary of the request\",\n  \"Appointment_status\": \"pending\",\n  \"reasoning\": \"why this was classified this way\"\n}\n\nRules:\n- Valid lead = requesting cleaning services in Metro Manila\n- Emergency = wants same day <4hrs, mentions leak/flood/sewage/mold\n- Urgent = move-in/out within 48hrs or event prep\n- Normal = 2-7 day window\n- Flexible = no deadline, \"whenever\", browsing\n- If spam, newsletter, out-of-office, or wrong recipient: isValidLead = false\n\nEmail:\n<email>\nName: {{ $('Preserve Email Context').item.json.from.value[0].name }}\nFrom: {{ $('Preserve Email Context').item.json.senderEmail }}\nSubject: {{ $('Preserve Email Context').item.json.headers.subject }}\nBody: {{ $('Preserve Email Context').item.json.text }}\n\n</email>",
+        "options": {
+          "systemMessage": "You are a lead qualification assistant for Cleaning Bee PH, a Metro Manila home cleaning service (₱250/hr, minimum 3 hours)."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        -544,
+        -1136
+      ],
+      "id": "4779a8c4-363a-477d-abf7-519e05e56238",
+      "name": "Analyze Lead Email"
+    },
+    {
+      "parameters": {
+        "jsCode": "return items.map((item, index) => {\n  const raw = item.json.output;\n  let parsed;\n  try {\n    parsed = typeof raw === 'string' ? JSON.parse(raw) : raw;\n  } catch(e) {\n    parsed = {\n      isValidLead: false,\n      customer_name: null,\n      customer_email: null,\n      requested_service: \"unknown\",\n      urgency: \"normal\",\n      summary: \"Parse error\",\n      Appointment_status: \"error\",\n      reasoning: \"AI output could not be parsed as JSON\"\n    };\n  }\n\n  // Validate required field — catch hallucinated field names\n  if (parsed.isValidLead === undefined) {\n    parsed = {\n      isValidLead: false,\n      customer_name: parsed.customer_name || null,\n      customer_email: parsed.customer_email || null,\n      requested_service: parsed.requested_service || \"unknown\",\n      urgency: parsed.urgency || \"normal\",\n      summary: \"Missing isValidLead in AI output\",\n      Appointment_status: \"error\",\n      reasoning: \"AI output was valid JSON but missing required field 'isValidLead'\"\n    };\n  }\n\n  // Per-item context: match by index (items maintain positional correspondence through AI Agent)\n  const allCtx = $items('Preserve Email Context');\n  const ctx = allCtx[index]?.json || allCtx[0]?.json || {};\n\n  return {\n    json: {\n      ...ctx,\n      ...parsed\n    }\n  };\n});"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -192,
+        -1136
+      ],
+      "id": "28756d0b-ff97-4e97-b6a1-3a21b15637e3",
+      "name": "Parse Lead Analysis"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "fe97865f-49d6-48b4-8ef1-7d4778debd2c",
+              "leftValue": "={{ $json.isValidLead }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        32,
+        -1136
+      ],
+      "id": "8212d197-ff02-40a1-a316-1626674e92d7",
+      "name": "is Valid Lead?"
+    },
+    {
+      "parameters": {
+        "operation": "markAsRead",
+        "messageId": "={{ $('Preserve Email Context').item.json.id }}"
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        256,
+        -1040
+      ],
+      "id": "b60a9e2d-99d4-4d98-9a89-e8d86e083774",
+      "name": "Archieve Email",
+      "webhookId": "528b8f0e-40a9-4996-9248-17c19d7d9eb1",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "vbsKC01G32vSea05",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Your job is to write a helpful reply to a lead who has inquired about cleaning services.\n\nYou have access to these tools:\n- Get Service Catalog: use for pricing and service details\n- Get Response Playbook: use for reply scripts and screening questions\n\nIMPORTANT: You must read both tools for every reply. Read the Service Catalog first for pricing and service info, then read the Response Playbook for reply scripts.\n\nRules:\n1. Always introduce yourself as Cleaning Bee PH\n2. If you need more info to give a quote, ask the screening questions from the playbook\n3. Do not provide an estimated cost. Quote only the minimum (₱750 / 3hrs) and state the final cost will be determined onsite after the team assesses the property. Always frame it as: \"Rate is ₱250/hr, minimum of 3 hours (₱750). The final cost depends on the actual scope of work — our team will confirm onsite.\"\n4. Be warm and professional\n5. For urgent/emergency leads, prioritize confirming availability\n6. Mention the urgency classification naturally in the email body (e.g. \"Since this is a flexible request, we can schedule...\" or \"Given the urgency, let's prioritize...\"), never as a separate line or after the signature\n7. Format the reply in clean HTML — use `<p>` tags for paragraphs, `<br>` for line breaks\n\nLead details:\nName: {{ $json.customer_name }}\nEmail: {{ $json.customer_email }}\nService requested: {{ $json.requested_service }}\nUrgency: {{ $json.urgency }}\nSummary of inquiry: {{ $json.summary }}\n\nOriginal email text:\nFrom: {{ $json.From }}\nSubject: {{ $json.Subject }}\nBody: {{ $json.snippet }}",
+        "options": {
+          "systemMessage": "You are a customer service agent for Cleaning Bee PH."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        544,
+        -1232
+      ],
+      "id": "aa742ac7-b3f1-41bf-9659-bcf7fde9e350",
+      "name": "Prepare Lead Reply"
+    },
+    {
+      "parameters": {
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        256,
+        -1232
+      ],
+      "id": "575c0d0e-4abb-40d1-8140-8a66b3482744",
+      "name": "Save Lead Context"
+    },
+    {
+      "parameters": {
+        "descriptionType": "manual",
+        "toolDescription": "Get a document in Google Docs",
+        "operation": "get",
+        "documentURL": "1GtGZUWGQdy9yop2fNZl3kcuhozWTBEfdvg5Ub-2ywgM"
+      },
+      "type": "n8n-nodes-base.googleDocsTool",
+      "typeVersion": 2,
+      "position": [
+        608,
+        -1008
+      ],
+      "id": "cc120417-2bfb-4e1e-bda6-08f402c06216",
+      "name": "Get Service Catalog",
+      "credentials": {
+        "googleDocsOAuth2Api": {
+          "id": "6EtbZOzwslssUpae",
+          "name": "Google Docs Credential"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "documentURL": "1exRB-N836C9EEzSyWjRCXqeU9yJAI_2em3MCwSLaHEc",
+        "simple": false
+      },
+      "type": "n8n-nodes-base.googleDocsTool",
+      "typeVersion": 2,
+      "position": [
+        736,
+        -1008
+      ],
+      "id": "3d18a1b5-fa3c-42c0-b488-8eb1543e76b5",
+      "name": "Get Response Playbook",
+      "credentials": {
+        "googleDocsOAuth2Api": {
+          "id": "6EtbZOzwslssUpae",
+          "name": "Google Docs Credential"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "return items.map((item, index) => {\n  const output = item.json.output;\n  const reply_body = typeof output === 'string'\n    ? output\n    : JSON.stringify(output);\n\n  // Per-item context: match by index (items maintain positional correspondence through AI Agent)\n  const allCtx = $items('Save Lead Context');\n  const ctx = allCtx[index]?.json || allCtx[0]?.json || {};\n\n  return {\n    json: {\n      ...ctx,\n      reply_body\n    }\n  };\n});"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        944,
+        -1232
+      ],
+      "id": "15a9f5de-08f5-4d39-a580-7b14d8b723d2",
+      "name": "Parse Reply"
+    },
+    {
+      "parameters": {
+        "operation": "reply",
+        "messageId": "={{ $json.id }}",
+        "message": "={{ $json.reply_body }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        1168,
+        -1232
+      ],
+      "id": "46a17332-3403-4917-b09d-a02982c5cdf7",
+      "name": "Send Auto-Reply to Lead",
+      "webhookId": "f3e34d85-e61a-4233-9b44-ae3f30c19cdb",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "vbsKC01G32vSea05",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "18ikdpMX9J3Yn1ZOMFb8RhbNx-eQX87PleRdMq5HyXBU",
+          "mode": "list",
+          "cachedResultName": "Cleaning Bee PH - Lead Tracker",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/[docs-link]"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Lead",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/[docs-link]"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Name": "={{ $('Parse Reply').item.json.customer_name }}",
+            "Email": "={{ $('Parse Reply').item.json.customer_email }}",
+            "Requested Service": "={{ $('Parse Reply').item.json.requested_service }}",
+            "Urgency Classification": "={{ $('Parse Reply').item.json.urgency }}",
+            "Appointment Status": "={{ $('Parse Reply').item.json.Appointment_status }}",
+            "Summary": "={{ $('Parse Reply').item.json.summary }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Name",
+              "displayName": "Name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Email",
+              "displayName": "Email",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Requested Service",
+              "displayName": "Requested Service",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Urgency Classification",
+              "displayName": "Urgency Classification",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Appointment Status",
+              "displayName": "Appointment Status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Summary",
+              "displayName": "Summary",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Screening Answers",
+              "displayName": "Screening Answers",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Apppointment Date",
+              "displayName": "Apppointment Date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        1840,
+        -1232
+      ],
+      "id": "46e522ca-c944-4398-9cc8-3c0c9074feeb",
+      "name": "Log Lead to Sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "PKJCLEdvutxM7wrQ",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "18ikdpMX9J3Yn1ZOMFb8RhbNx-eQX87PleRdMq5HyXBU",
+          "mode": "list",
+          "cachedResultName": "Cleaning Bee PH - Lead Tracker",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/[docs-link]"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Lead",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/[docs-link]"
+        },
+        "filtersUI": {
+          "values": [
+            {
+              "lookupColumn": "Email",
+              "lookupValue": "={{ $('Parse Reply').item.json.customer_email }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        1392,
+        -1232
+      ],
+      "id": "fbaa30b8-95f0-4224-a8a8-2f315b4739cc",
+      "name": "Check Existing Lead",
+      "alwaysOutputData": true,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "PKJCLEdvutxM7wrQ",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "c5b08e69-b7ee-450f-bb5d-a86d27cd902f",
+              "leftValue": "={{ $('Check Existing Lead').item.json.values().length }}",
+              "rightValue": 0,
+              "operator": {
+                "type": "number",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        1616,
+        -1232
+      ],
+      "id": "96f5d5ee-bfdc-4811-a038-cbdab35f2a5a",
+      "name": "Should Log?"
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-3.1-flash-lite",
+        "options": {
+          "temperature": 0.7
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1.1,
+      "position": [
+        80,
+        -576
+      ],
+      "id": "86379921-a48b-46db-b6b9-aba6da697e76",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "8a1lqsJQaAAgkcFF",
+          "name": "Google Gemini(PaLM) Api Credential"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "18ikdpMX9J3Yn1ZOMFb8RhbNx-eQX87PleRdMq5HyXBU",
+          "mode": "list",
+          "cachedResultName": "Cleaning Bee PH - Lead Tracker",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/[docs-link]"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Lead",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/[docs-link]"
+        },
+        "filtersUI": {
+          "values": [
+            {
+              "lookupColumn": "Email",
+              "lookupValue": "={{ $json.senderEmail }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        -992,
+        -1232
+      ],
+      "id": "4f4d4bde-2c72-4fdf-ad20-cd156deb44a6",
+      "name": "Sheet - Check Existing Lead",
+      "alwaysOutputData": true,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "PKJCLEdvutxM7wrQ",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "6b1ae6c2-5c5a-4c90-a6f1-9c5a86667f91",
+              "leftValue": "={{ $('Sheet - Check Existing Lead').item.json.values().length }}",
+              "rightValue": 0,
+              "operator": {
+                "type": "number",
+                "operation": "gt"
+              }
+            },
+            {
+              "id": "b35e4a95-7879-4438-a6c0-b8d94136d127",
+              "leftValue": "={{ $json[\"Appointment Status\"] }}",
+              "rightValue": "pending",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -768,
+        -1232
+      ],
+      "id": "ced07b7d-5f6c-411a-ab3e-b477e6e27730",
+      "name": "Is Lead or Reply?"
+    },
+    {
+      "parameters": {
+        "jsCode": "return items.map((item, index) => {\n  const rows = item.json.rows || [];\n  const row = rows[0] || {};\n\n  const allCtx = $items('Preserve Email Context');\n  const ctx = allCtx[index]?.json || allCtx[0]?.json || {};\n\n  const email = row.Email || ctx.senderEmail || '';\n  const rawText = ctx.text || '';\n  const threadId = ctx.threadId || ctx.id || '';\n\n  const cleanedBody = rawText\n    .split(/\\n\\s*On\\s.*?wrote:\\s*\\n/)[0]\n    .replace(/^[\\s]*>.*$/gm, '')\n    .trim();\n\n  return {\n    json: { Email: email, cleanedBody, threadId }\n  };\n});"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -480,
+        -1328
+      ],
+      "id": "8928a970-3654-4f31-a431-e061a63431e8",
+      "name": "Prepare Reply Data"
+    },
+    {
+      "parameters": {
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -1216,
+        -1232
+      ],
+      "id": "8facaff2-6f38-4d82-b9ab-6cec693bb76b",
+      "name": "Preserve Email Context"
+    },
+    {
+      "parameters": {
+        "operation": "markAsRead",
+        "messageId": "={{ $('Prepare Reply Data').item.json.threadId }}"
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        32,
+        -1328
+      ],
+      "id": "ca5ae5d2-a203-4be1-8e61-b2df7921005a",
+      "name": "Archive Reply",
+      "webhookId": "49c7bccb-da38-44c5-a2fb-e43cb6106fe2",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "vbsKC01G32vSea05",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "value": "18ikdpMX9J3Yn1ZOMFb8RhbNx-eQX87PleRdMq5HyXBU",
+          "mode": "list",
+          "cachedResultName": "Cleaning Bee PH - Lead Tracker",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/[docs-link]"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Lead",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/[docs-link]"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Email": "={{ $json.Email }}",
+            "Screening Answers": "={{ $json.cleanedBody }}",
+            "Appointment Status": "replied"
+          },
+          "matchingColumns": [
+            "Email"
+          ],
+          "schema": [
+            {
+              "id": "Name",
+              "displayName": "Name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Email",
+              "displayName": "Email",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Requested Service",
+              "displayName": "Requested Service",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Urgency Classification",
+              "displayName": "Urgency Classification",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Appointment Status",
+              "displayName": "Appointment Status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Summary",
+              "displayName": "Summary",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Screening Questions",
+              "displayName": "Screening Questions",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Screening Answers",
+              "displayName": "Screening Answers",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Apppointment Date",
+              "displayName": "Apppointment Date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "row_number",
+              "displayName": "row_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "readOnly": true,
+              "removed": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        -192,
+        -1328
+      ],
+      "id": "2888d90f-d807-4356-8fa9-1fc369804cc0",
+      "name": "Store Customer Reply",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "PKJCLEdvutxM7wrQ",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "minutes",
+              "minutesInterval": 2
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        -864,
+        -112
+      ],
+      "id": "37c7e5b5-6e17-41d5-b70f-d9aedc735e82",
+      "name": "Check Schedule"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "18ikdpMX9J3Yn1ZOMFb8RhbNx-eQX87PleRdMq5HyXBU",
+          "mode": "list",
+          "cachedResultName": "Cleaning Bee PH - Lead Tracker",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/[docs-link]"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Lead",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/[docs-link]"
+        },
+        "filtersUI": {
+          "values": [
+            {
+              "lookupColumn": "Appointment Status",
+              "lookupValue": "replied"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        -640,
+        -112
+      ],
+      "id": "43d0c5d2-0c53-45fa-862c-9778a319e3de",
+      "name": "Fetch Pending Leads",
+      "alwaysOutputData": true,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "PKJCLEdvutxM7wrQ",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "795880bb-96ed-4137-95d8-c5e6c264ef28",
+              "leftValue": "={{ $json['Appointment Status'] }}",
+              "rightValue": "replied",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            },
+            {
+              "id": "f710828e-fda7-44f9-8abf-719e15f3dadb",
+              "leftValue": "={{ $json['Screening Answers'] }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEquals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -416,
+        -112
+      ],
+      "id": "b724dadd-493b-47c6-b180-36fbfbb4ecf6",
+      "name": "Needs Scheduling?"
+    },
+    {
+      "parameters": {
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -192,
+        -112
+      ],
+      "id": "387416c4-4391-4649-90e5-92a9253f6f8f",
+      "name": "Save Scheduling Context"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=You are a scheduling assistant for Cleaning Bee PH.\n\nYour job is to check calendar availability, determine the best appointment slot based on urgency and scheduling rules, and prepare the confirmation details.\n\nYou have access to these tools:\n- Check Calendar Availability: looks 2 weeks ahead for existing events on the calendar\n- Get Scheduling Rules: booking guidelines, operating hours, confirmation script\n\nLead details from the sheet:\nName: {{ $json.Name }}\nEmail: {{ $json.Email }}\nService requested: {{ $json['Requested Service'] }}\nUrgency: {{ $json['Urgency Classification'] }}\nSummary: {{ $json.Summary }}\nScreening answers: {{ $json['Screening Answers'] }}\n\nFlow (always follow this order):\n1. Read the lead's requested date, urgency, and screening answers from the context\n2. Read Get Scheduling Rules for operating hours and booking rules\n3. Check Calendar Availability for existing events in the 2-week window\n4. Select the best available slot based on urgency SLA, operating hours, and existing events\n5. Output the selection as structured JSON\n\nOutput ONLY this JSON object with no other text, no markdown, no code fences:\n\n{\n  \"appointment_date\": \"YYYY-MM-DD\",\n  \"start_time\": \"HH:MM\",\n  \"end_time\": \"HH:MM\",\n  \"duration_hours\": 3,\n  \"duration_reasoning\": \"brief explanation of how duration was estimated\",\n  \"confirmation_email_html\": \"<p>Dear [Name],...</p>\",\n  \"event_summary\": \"Cleaning Bee PH - [Service type] for [Customer Name]\",\n  \"event_description\": \"Full details including address, service type, and special instructions\"\n}\n\nRules:\n\n- Today's date: {{ $now.format('YYYY-MM-DD') }}. appointment_date must be today or later\n- Minimum 3 hours per booking\n- 30-minute buffer between appointments\n- Use urgency SLA from scheduling rules to determine the slot window\n- confirmation_email_html must include all components listed in Get Scheduling Rules\n- confirmation_email_html cost section: do not quote an estimated total. Mention only the rate (₱250/hr, min 3 hrs) and state the final cost will be determined onsite after assessment\n- confirmation_email_html time format: use 12-hour clock with AM/PM (e.g. \"9:00 AM\" not \"09:00\")\n- appointment_date must be in YYYY-MM-DD format\n- start_time and end_time must be in 24-hour HH:MM format\n- duration_hours: estimate from the lead's property size and condition in screening answers using the duration guidelines in Get Scheduling Rules. Do not default to 3 unless the lead is a small well-maintained unit\n- duration_reasoning: brief explanation of how duration was estimated (e.g. \"2BR, well-maintained → 3 hours\")\n",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        32,
+        -112
+      ],
+      "id": "12f3b247-f9c5-403a-a7a7-dc2ff65f5e40",
+      "name": "Schedule & Confirm"
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "documentURL": "11bzxoWbdcuHkaEegISCqhB-V9v3emc8SeJ79ENrV2aU"
+      },
+      "type": "n8n-nodes-base.googleDocsTool",
+      "typeVersion": 2,
+      "position": [
+        48,
+        128
+      ],
+      "id": "fb0ca1bd-ccd9-4a7f-8b54-9294911bd32b",
+      "name": "Get a document in Google Docs",
+      "credentials": {
+        "googleDocsOAuth2Api": {
+          "id": "6EtbZOzwslssUpae",
+          "name": "Google Docs Credential"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "calendar": {
+          "__rl": true,
+          "value": "61e905f72e510d18a8ba3b0f150e81333327189fd6f1a1cc20c41d80151cb6dc@group.calendar.google.com",
+          "mode": "list",
+          "cachedResultName": "Cleaning Bee Calendar"
+        },
+        "returnAll": true,
+        "timeMax": "={{ $now.plus({ week: 2 }) }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleCalendarTool",
+      "typeVersion": 1.3,
+      "position": [
+        224,
+        128
+      ],
+      "id": "ad94682e-7469-4f32-9282-e11170da0951",
+      "name": "Check Calendar Availability",
+      "credentials": {
+        "googleCalendarOAuth2Api": {
+          "id": "l2gn7znio0jRzuBb",
+          "name": "Google Calendar account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "return items.map((item, index) => {\n  const raw = item.json.output;\n  let parsed;\n  try {\n    parsed = typeof raw === 'string' ? JSON.parse(raw) : raw;\n  } catch(e) {\n    parsed = {\n      appointment_date: null,\n      start_time: null,\n      end_time: null,\n      duration_hours: 3,\n      confirmation_email_html: \"<p>Sorry, we encountered an error scheduling your appointment. Please contact us directly.</p>\",\n      event_summary: \"Cleaning Bee PH - Appointment\",\n      event_description: \"Scheduling error - manual review needed\",\n      Appointment_status: \"error\",\n      _parseError: true\n    };\n  }\n\n  // Validate required fields\n  const required = ['appointment_date', 'start_time', 'end_time', 'confirmation_email_html'];\n  for (const field of required) {\n    if (!parsed[field]) {\n      parsed.Appointment_status = \"error\";\n      parsed._validationError = `Missing required field: ${field}`;\n      break;\n    }\n  }\n\n  // Validate time format (HH:MM or H:MM — pad single-digit hours)\n  if (!parsed._validationError && parsed.start_time) {\n    const timeMatch = /^(\\d{1,2}):(\\d{2})$/.exec(parsed.start_time);\n    if (timeMatch) {\n      parsed.start_time = timeMatch[1].padStart(2, '0') + ':' + timeMatch[2];\n    } else {\n      parsed.Appointment_status = \"error\";\n      parsed._validationError = `Invalid start_time format: ${parsed.start_time}. Expected HH:MM`;\n    }\n  }\n  if (!parsed._validationError && parsed.end_time) {\n    const timeMatch = /^(\\d{1,2}):(\\d{2})$/.exec(parsed.end_time);\n    if (timeMatch) {\n      parsed.end_time = timeMatch[1].padStart(2, '0') + ':' + timeMatch[2];\n    } else {\n      parsed.Appointment_status = \"error\";\n      parsed._validationError = `Invalid end_time format: ${parsed.end_time}. Expected HH:MM`;\n    }\n  }\n\n  // Per-item context: match by index (items maintain positional correspondence through AI Agent)\n  const allCtx = $items('Save Scheduling Context');\n  const ctx = allCtx[index]?.json || allCtx[0]?.json || {};\n\n  return {\n    json: {\n      ...ctx,\n      ...parsed,\n      Appointment_status: parsed._parseError || parsed._validationError ? \"error\" : \"scheduled\"\n    }\n  };\n});"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        384,
+        -112
+      ],
+      "id": "5246202b-f6b8-4bd2-a5d7-b637029db71a",
+      "name": "Parse Schedule"
+    },
+    {
+      "parameters": {
+        "jsCode": "return items.map(item => {\n  const from = item.json.From || item.json.from || '';\n  let senderEmail = '';\n\n  if (typeof from === 'object' && from.text) {\n    // Simplify OFF — from is { value, html, text }\n    const match = from.text.match(/<([^>]+)>/);\n    senderEmail = match ? match[1] : from.text.trim();\n  } else if (typeof from === 'string') {\n    // Simplify ON — from is \"Name <email>\" or \"From: Name <email>\"\n    const match = from.match(/<([^>]+)>/);\n    senderEmail = match ? match[1] : from.trim();\n  }\n\n  return { json: { ...item.json, senderEmail } };\n});"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1440,
+        -1232
+      ],
+      "id": "537e2edb-36c0-437f-917d-dac236b6636b",
+      "name": "Extract Sender Email "
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "87f6598e-7faa-4f45-971d-1657318e2910",
+              "leftValue": "={{ $json.Appointment_status }}",
+              "rightValue": "error",
+              "operator": {
+                "type": "string",
+                "operation": "notEquals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        608,
+        -112
+      ],
+      "id": "db691991-6d4e-464a-b3d5-abe6ad2f92c0",
+      "name": "Can Schedule?"
+    },
+    {
+      "parameters": {
+        "calendar": {
+          "__rl": true,
+          "value": "61e905f72e510d18a8ba3b0f150e81333327189fd6f1a1cc20c41d80151cb6dc@group.calendar.google.com",
+          "mode": "list",
+          "cachedResultName": "Cleaning Bee Calendar"
+        },
+        "start": "={{ $json.appointment_date }}T{{ $json.start_time }}",
+        "end": "={{ $json.appointment_date }}T{{ $json.end_time }}",
+        "additionalFields": {
+          "description": "={{ $json.event_description }}",
+          "sendUpdates": "all",
+          "summary": "={{ $json.event_summary }}"
+        }
+      },
+      "type": "n8n-nodes-base.googleCalendar",
+      "typeVersion": 1.3,
+      "position": [
+        832,
+        -208
+      ],
+      "id": "f9dfc7d0-2e29-4805-93d9-33fd1393ef6c",
+      "name": "Book Appointment",
+      "credentials": {
+        "googleCalendarOAuth2Api": {
+          "id": "l2gn7znio0jRzuBb",
+          "name": "Google Calendar account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $('Parse Schedule').item.json.Email }}",
+        "subject": "Your Cleaning Bee PH Appointment is Confirmed",
+        "message": "={{ $('Parse Schedule').item.json.confirmation_email_html }}",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        1056,
+        -208
+      ],
+      "id": "0fc36c2d-3329-4742-9f09-d263a2544589",
+      "name": "Send Confirmation Email",
+      "webhookId": "ec3f6481-c520-445f-8540-8174ab09821b",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "vbsKC01G32vSea05",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "value": "18ikdpMX9J3Yn1ZOMFb8RhbNx-eQX87PleRdMq5HyXBU",
+          "mode": "list",
+          "cachedResultName": "Cleaning Bee PH - Lead Tracker",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/[docs-link]"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Lead",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/[docs-link]"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Email": "={{ $('Parse Schedule').item.json.Email }}",
+            "Appointment Status": "={{ $('Parse Schedule').item.json.Appointment_status }}",
+            "Apppointment Date": "={{ $('Parse Schedule').item.json.appointment_date }} {{ $('Parse Schedule').item.json.start_time }}"
+          },
+          "matchingColumns": [
+            "Email"
+          ],
+          "schema": [
+            {
+              "id": "Name",
+              "displayName": "Name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Email",
+              "displayName": "Email",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Requested Service",
+              "displayName": "Requested Service",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Urgency Classification",
+              "displayName": "Urgency Classification",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Appointment Status",
+              "displayName": "Appointment Status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Summary",
+              "displayName": "Summary",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Screening Questions",
+              "displayName": "Screening Questions",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Screening Answers",
+              "displayName": "Screening Answers",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Apppointment Date",
+              "displayName": "Apppointment Date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "row_number",
+              "displayName": "row_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "readOnly": true,
+              "removed": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        1280,
+        -208
+      ],
+      "id": "b05d30b3-a8a5-4934-b581-296b2aa037ec",
+      "name": "Mark Lead as Scheduled",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "PKJCLEdvutxM7wrQ",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "value": "18ikdpMX9J3Yn1ZOMFb8RhbNx-eQX87PleRdMq5HyXBU",
+          "mode": "list",
+          "cachedResultName": "Cleaning Bee PH - Lead Tracker",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/[docs-link]"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Lead",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/[docs-link]"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Email": "={{ $('Parse Schedule').item.json.Email }}",
+            "Appointment Status": "={{ $('Parse Schedule').item.json.Appointment_status }}"
+          },
+          "matchingColumns": [
+            "Email"
+          ],
+          "schema": [
+            {
+              "id": "Name",
+              "displayName": "Name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Email",
+              "displayName": "Email",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Requested Service",
+              "displayName": "Requested Service",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Urgency Classification",
+              "displayName": "Urgency Classification",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Appointment Status",
+              "displayName": "Appointment Status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Summary",
+              "displayName": "Summary",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Screening Questions",
+              "displayName": "Screening Questions",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Screening Answers",
+              "displayName": "Screening Answers",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Apppointment Date",
+              "displayName": "Apppointment Date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "row_number",
+              "displayName": "row_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "readOnly": true,
+              "removed": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        832,
+        -16
+      ],
+      "id": "41ba2d88-5676-4775-924c-d1ac58604674",
+      "name": "Mark Lead as Error",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "PKJCLEdvutxM7wrQ",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "",
+        "height": 784,
+        "width": 3808,
+        "color": 2
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -1760,
+        -1504
+      ],
+      "id": "55f6b23a-b8c3-4e6e-8fe5-8d76d81a43fd",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "content": "",
+        "height": 624,
+        "width": 3040,
+        "color": "#0F141A"
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -1280,
+        -304
+      ],
+      "id": "3a5fb1b6-a970-4bc1-b288-608c47bd77ee",
+      "name": "Sticky Note1"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Watch Lead Emails": {
+      "main": [
+        [
+          {
+            "node": "Extract Sender Email ",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Analyze Lead Email": {
+      "main": [
+        [
+          {
+            "node": "Parse Lead Analysis",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Lead Analysis": {
+      "main": [
+        [
+          {
+            "node": "is Valid Lead?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "is Valid Lead?": {
+      "main": [
+        [
+          {
+            "node": "Save Lead Context",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Archieve Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Save Lead Context": {
+      "main": [
+        [
+          {
+            "node": "Prepare Lead Reply",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Service Catalog": {
+      "ai_tool": [
+        [
+          {
+            "node": "Prepare Lead Reply",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Response Playbook": {
+      "ai_tool": [
+        [
+          {
+            "node": "Prepare Lead Reply",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Lead Reply": {
+      "main": [
+        [
+          {
+            "node": "Parse Reply",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Reply": {
+      "main": [
+        [
+          {
+            "node": "Send Auto-Reply to Lead",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Auto-Reply to Lead": {
+      "main": [
+        [
+          {
+            "node": "Check Existing Lead",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Existing Lead": {
+      "main": [
+        [
+          {
+            "node": "Should Log?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Should Log?": {
+      "main": [
+        [
+          {
+            "node": "Log Lead to Sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Schedule & Confirm",
+            "type": "ai_languageModel",
+            "index": 0
+          },
+          {
+            "node": "Prepare Lead Reply",
+            "type": "ai_languageModel",
+            "index": 0
+          },
+          {
+            "node": "Analyze Lead Email",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Sheet - Check Existing Lead": {
+      "main": [
+        [
+          {
+            "node": "Is Lead or Reply?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Is Lead or Reply?": {
+      "main": [
+        [
+          {
+            "node": "Prepare Reply Data",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Analyze Lead Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Preserve Email Context": {
+      "main": [
+        [
+          {
+            "node": "Sheet - Check Existing Lead",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Reply Data": {
+      "main": [
+        [
+          {
+            "node": "Store Customer Reply",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Store Customer Reply": {
+      "main": [
+        [
+          {
+            "node": "Archive Reply",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Schedule": {
+      "main": [
+        [
+          {
+            "node": "Fetch Pending Leads",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Pending Leads": {
+      "main": [
+        [
+          {
+            "node": "Needs Scheduling?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Needs Scheduling?": {
+      "main": [
+        [
+          {
+            "node": "Save Scheduling Context",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Save Scheduling Context": {
+      "main": [
+        [
+          {
+            "node": "Schedule & Confirm",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get a document in Google Docs": {
+      "ai_tool": [
+        [
+          {
+            "node": "Schedule & Confirm",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Calendar Availability": {
+      "ai_tool": [
+        [
+          {
+            "node": "Schedule & Confirm",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Schedule & Confirm": {
+      "main": [
+        [
+          {
+            "node": "Parse Schedule",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Sender Email ": {
+      "main": [
+        [
+          {
+            "node": "Preserve Email Context",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Schedule": {
+      "main": [
+        [
+          {
+            "node": "Can Schedule?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Can Schedule?": {
+      "main": [
+        [
+          {
+            "node": "Book Appointment",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Mark Lead as Error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Book Appointment": {
+      "main": [
+        [
+          {
+            "node": "Send Confirmation Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Confirmation Email": {
+      "main": [
+        [
+          {
+            "node": "Mark Lead as Scheduled",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "timeSavedMode": "fixed",
+    "errorWorkflow": "BnEBdfPRvrSZQNmQ",
+    "callerPolicy": "workflowsFromSameOwner",
+    "availableInMCP": false
+  },
+  "versionId": "e84c70a8-69a8-4768-8d7d-f1b371f1129c",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "50824c1af21bce57a98040904ff7ba425e52c902ff76f6105944f37b79b0806c"
+  },
+  "nodeGroups": [],
+  "id": "YpImpbVhwpWJPf4I",
+  "tags": []
+}

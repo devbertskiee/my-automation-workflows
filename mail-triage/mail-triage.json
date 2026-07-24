@@ -1,0 +1,432 @@
+{
+  "name": "Gmail Labeling AI Agent",
+  "nodes": [
+    {
+      "parameters": {
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyHour",
+              "minute": 1
+            }
+          ]
+        },
+        "simple": false,
+        "filters": {
+          "q": "in:inbox category:primary"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmailTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        -976,
+        768
+      ],
+      "id": "3dba731a-944a-4824-a4d4-350aebbbdd01",
+      "name": "Wait for Email Received",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "vbsKC01G32vSea05",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-3.1-flash-lite",
+        "options": {
+          "temperature": 0.4
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1.1,
+      "position": [
+        -672,
+        1152
+      ],
+      "id": "b8663700-a25f-4f3d-bf06-67c4e1b22781",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "8a1lqsJQaAAgkcFF",
+          "name": "Google Gemini(PaLM) Api Credential"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "addLabels",
+        "messageId": "={{ $json.id }}",
+        "labelIds": [
+          "Label_8779059995324728027"
+        ]
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        32,
+        0
+      ],
+      "id": "76a4df99-96a8-4334-87e0-30005d7afcca",
+      "name": "Action Label",
+      "webhookId": "4cf20033-5c1f-4609-9e8d-01759dca9fd0",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "vbsKC01G32vSea05",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "addLabels",
+        "messageId": "={{ $json.id }}",
+        "labelIds": [
+          "Label_92527783751754109"
+        ]
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        32,
+        192
+      ],
+      "id": "58ad31df-0495-4a55-a645-79b10c6aa63c",
+      "name": "Accounts & Security Label",
+      "webhookId": "4cf20033-5c1f-4609-9e8d-01759dca9fd0",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "vbsKC01G32vSea05",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "addLabels",
+        "messageId": "={{ $json.id }}",
+        "labelIds": [
+          "Label_3795576484819785756"
+        ]
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        32,
+        384
+      ],
+      "id": "889bea66-59b5-4e6c-990c-7f251295f078",
+      "name": "Money Label",
+      "webhookId": "4cf20033-5c1f-4609-9e8d-01759dca9fd0",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "vbsKC01G32vSea05",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "addLabels",
+        "messageId": "={{ $json.id }}",
+        "labelIds": [
+          "Label_7045043290353625336"
+        ]
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        32,
+        576
+      ],
+      "id": "830056d8-2a80-4144-b882-3bc643c757ad",
+      "name": "App & Systems Notif Label",
+      "webhookId": "4cf20033-5c1f-4609-9e8d-01759dca9fd0",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "vbsKC01G32vSea05",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "addLabels",
+        "messageId": "={{ $json.id }}",
+        "labelIds": [
+          "Label_7184983746905217358"
+        ]
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        32,
+        768
+      ],
+      "id": "187e017a-516f-49c4-8ce1-a53a3d3d7d57",
+      "name": "Personal & Life Label",
+      "webhookId": "4cf20033-5c1f-4609-9e8d-01759dca9fd0",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "vbsKC01G32vSea05",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "addLabels",
+        "messageId": "={{ $json.id }}",
+        "labelIds": [
+          "Label_4567199324616155076"
+        ]
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        32,
+        1152
+      ],
+      "id": "0025c732-b864-4f17-a868-cecd4b6ee913",
+      "name": "Work Label",
+      "webhookId": "4cf20033-5c1f-4609-9e8d-01759dca9fd0",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "vbsKC01G32vSea05",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "addLabels",
+        "messageId": "={{ $json.id }}",
+        "labelIds": [
+          "Label_2515398026650710704"
+        ]
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        32,
+        960
+      ],
+      "id": "2aa8d650-624a-4c8e-8708-090f5f7e17f9",
+      "name": "Reading and Promotions Label",
+      "webhookId": "4cf20033-5c1f-4609-9e8d-01759dca9fd0",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "vbsKC01G32vSea05",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "addLabels",
+        "messageId": "={{ $json.id }}",
+        "labelIds": [
+          "Label_2388542634197916914"
+        ]
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        32,
+        1344
+      ],
+      "id": "b06f5e0b-919c-4fcd-8b7c-9d9960665bff",
+      "name": "Records Label",
+      "webhookId": "4cf20033-5c1f-4609-9e8d-01759dca9fd0",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "vbsKC01G32vSea05",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "inputText": "={{ $json.text }}",
+        "categories": {
+          "categories": [
+            {
+              "category": "Action",
+              "description": "Emails whose primary purpose is to request or require something from the recipient. The recipient is expected to reply, approve, review, sign, submit, complete, update, fix, choose, schedule, pay, or otherwise take a meaningful action. Includes requests with deadlines and problems requiring intervention. Do not classify here merely because an email contains a button or link. Verification codes, login confirmations, receipts, routine renewals, and informational notifications belong to their subject-specific categories unless they explicitly require resolving a problem or completing a task."
+            },
+            {
+              "category": "Accounts & Security",
+              "description": "Emails primarily about account identity, authentication, access, privacy, or security. Includes verification codes, OTPs, email verification, sign-in alerts, new-device notices, password changes, password resets, account recovery, suspicious activity, security warnings, permission changes, and important account-access changes. Use this category even when the email is automatically generated. If the message reports a security problem that clearly requires intervention, use Action instead."
+            },
+            {
+              "category": "Money",
+              "description": "Emails primarily about payments, purchases, billing, banking, subscriptions, or financial transactions. Includes receipts, invoices, payment confirmations, refunds, charges, bank/card notifications, billing statements, subscription renewals, purchase confirmations, credits, and transaction notices. Routine financial confirmations belong here even if they are mainly kept as records. If the email specifically requires the recipient to resolve a payment/billing problem, use Action."
+            },
+            {
+              "category": "App & System Notifications",
+              "description": "Automated operational or activity notifications from apps, websites, services, devices, or systems that do not fit a more specific category. Includes comments, mentions, reactions, follows, shared-item activity, automated reports, system status messages, backup/sync notices, usage notifications, job/process results, and general platform activity. Do not use for authentication/security emails, financial emails, marketing/newsletters, or messages requiring meaningful action."
+            },
+            {
+              "category": "Personal & Life",
+              "description": "Emails primarily concerning the recipient's personal life, travel, transportation, deliveries, reservations, appointments, household matters, or personal correspondence. Includes flight/hotel bookings, itineraries, shipping and delivery updates, reservations, personal appointments, and messages from friends or family. Automated emails can belong here when their primary subject is a personal-life activity such as a flight or delivery. Use Action instead when the main purpose is explicitly requesting an action."
+            },
+            {
+              "category": "Work",
+              "description": "Emails primarily concerning professional, employment, client, vendor, project, organizational, or business matters. Includes workplace announcements, project updates, meeting information, client/vendor correspondence, professional discussions, reports, and business-related information. Use this when the main purpose is professional communication or information. If the primary purpose is explicitly asking the recipient to perform a task, respond, approve, review, or make a decision, use Action instead."
+            },
+            {
+              "category": "Reading & Promotions",
+              "description": "Emails primarily sent for marketing, promotion, recurring informational content, education, news, or optional reading. Includes newsletters, promotional campaigns, sales, discounts, offers, product announcements, content digests, recommendations, articles, community digests, and marketing messages. These messages generally do not require a personal response or necessary action. Calls-to-action such as “Shop now,” “Learn more,” or “Read more” do not make the email Action."
+            },
+            {
+              "category": "Records",
+              "description": "Important reference or archival emails that do not naturally fit any other category and require no action. Includes certificates, official documents, finalized agreements, policies, warranties, formal notices, completed registrations, licenses, and other documents primarily retained for future reference. Use this as a fallback archival category, not a generic category for every confirmation. Financial confirmations belong to Money; travel confirmations belong to Personal & Life; security/account confirmations belong to Accounts & Security; professional records belong to Work when their professional context is primary."
+            }
+          ]
+        },
+        "options": {
+          "systemPromptTemplate": "You are an email classifier.\n\nYou receive ONLY the email body. You do not have access to the subject, sender, recipient, or other metadata.\n\nClassify the email into exactly ONE available category based on the primary purpose of the body.\n\nRULES:\n- Analyze the overall meaning and intent, not isolated keywords.\n- If multiple topics exist, choose the category representing the main purpose.\n- Ignore signatures, footers, disclaimers, unsubscribe text, navigation, social links, and other boilerplate.\n- Do not classify as Action merely because the email contains a link or button such as \"View\", \"Learn more\", \"Shop now\", or \"Open app\".\n- Action is only for emails where the recipient is expected to complete a meaningful task, respond, approve, submit, update, resolve an issue, or make a decision.\n- Verification codes and authentication steps belong to Accounts & Security unless the message primarily concerns resolving an account/security problem.\n- Receipts and routine payment confirmations belong to Money.\n- Automated notifications should use their specific category when identifiable; use App & System Notifications only when no more specific category applies.\n- Records is a fallback for important archival/reference content that does not fit a more specific category.\n\nIf categories overlap, determine the primary intent first. If still ambiguous, use this priority:\n\n1. Action\n2. Accounts & Security\n3. Money\n4. Work\n5. Personal & Life\n6. App & System Notifications\n7. Reading & Promotions\n8. Records\n\nReturn exactly one category."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.textClassifier",
+      "typeVersion": 1.1,
+      "position": [
+        -672,
+        672
+      ],
+      "id": "112c9780-ac31-4b4e-b345-642905e49d20",
+      "name": "🤖 Category Classifier"
+    },
+    {
+      "parameters": {
+        "content": "## MailTriage\nAI-Powered Email Classification & Triage Pipeline",
+        "height": 864,
+        "width": 832,
+        "color": 7
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -1056,
+        432
+      ],
+      "id": "33a98542-9b83-4e45-a9ca-d921ea19648c",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "content": "",
+        "height": 1584,
+        "width": 464,
+        "color": "#241C2B"
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -160,
+        -48
+      ],
+      "id": "56ca1129-3a3b-4bf2-b967-c5cec57e7a2c",
+      "name": "Sticky Note1"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Wait for Email Received": {
+      "main": [
+        [
+          {
+            "node": "🤖 Category Classifier",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "🤖 Category Classifier",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "🤖 Category Classifier": {
+      "main": [
+        [
+          {
+            "node": "Action Label",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Accounts & Security Label",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Money Label",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "App & Systems Notif Label",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Personal & Life Label",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Work Label",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Reading and Promotions Label",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Records Label",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "86e40a21-c945-4171-a512-978e1c23e9b8",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "50824c1af21bce57a98040904ff7ba425e52c902ff76f6105944f37b79b0806c"
+  },
+  "nodeGroups": [],
+  "id": "ewoWRJ90zsxGVrTE",
+  "tags": []
+}

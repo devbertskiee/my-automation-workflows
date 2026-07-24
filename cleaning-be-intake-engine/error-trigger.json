@@ -1,0 +1,160 @@
+{
+  "name": "Cleaning Bee - Error Trigger",
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.errorTrigger",
+      "typeVersion": 1,
+      "position": [
+        -576,
+        -112
+      ],
+      "id": "dea2edf6-6c84-4e01-9ea7-9dc17e60dbac",
+      "name": "Error Trigger"
+    },
+    {
+      "parameters": {
+        "sendTo": "bert.stark3231@gmail.com",
+        "subject": "=Cleaning Bee PH Error — {{ $json.nodeName }}",
+        "emailType": "text",
+        "message": "=Workflow: {{ $json.workflow.name }}\nNode: {{ $json.execution.error.node.name }}\nError: {{ $json.execution.error.message }}\nTime: {{ $json.execution.error.timestamp }}\nURL: {{ $json.execution.url }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        -352,
+        -112
+      ],
+      "id": "cb805270-796c-4231-8e91-cf7e64cca405",
+      "name": "Send Error Notification",
+      "webhookId": "03252f88-a312-4df8-a605-701b9697b671",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "vbsKC01G32vSea05",
+          "name": "Gmail account"
+        }
+      }
+    }
+  ],
+  "pinData": {
+    "Error Trigger": [
+      {
+        "json": {
+          "execution": {
+            "id": "723",
+            "url": "https://automation.diskawntify.com/workflow/YpImpbVhwpWJPf4I/executions/723",
+            "error": {
+              "level": "warning",
+              "tags": {},
+              "timestamp": 1783961578771,
+              "context": {},
+              "functionality": "regular",
+              "name": "NodeOperationError",
+              "node": {
+                "parameters": {
+                  "authentication": "oAuth2",
+                  "resource": "sheet",
+                  "operation": "read",
+                  "documentId": {
+                    "__rl": true,
+                    "value": "18ikdpMX9J3Yn1ZOMFb8RhbNx-eQX87PleRdMq5HyXBU",
+                    "mode": "list",
+                    "cachedResultName": "Cleaning Bee PH - Lead Tracker",
+                    "cachedResultUrl": "https://docs.google.com/spreadsheets/d/18ikdpMX9J3Yn1ZOMFb8RhbNx-eQX87PleRdMq5HyXBU/edit?usp=drivesdk"
+                  },
+                  "sheetName": {
+                    "__rl": true,
+                    "value": "gid=0",
+                    "mode": "list",
+                    "cachedResultName": "Lead",
+                    "cachedResultUrl": "https://docs.google.com/spreadsheets/d/18ikdpMX9J3Yn1ZOMFb8RhbNx-eQX87PleRdMq5HyXBU/edit#gid=0"
+                  },
+                  "filtersUI": {
+                    "values": [
+                      {
+                        "lookupColumn": "",
+                        "lookupValue": ""
+                      }
+                    ]
+                  },
+                  "combineFilters": "AND",
+                  "options": {}
+                },
+                "type": "n8n-nodes-base.googleSheets",
+                "typeVersion": 4.7,
+                "position": [
+                  -1472,
+                  -192
+                ],
+                "id": "43d0c5d2-0c53-45fa-862c-9778a319e3de",
+                "name": "Fetch Pending Leads",
+                "alwaysOutputData": true,
+                "credentials": {
+                  "googleSheetsOAuth2Api": {
+                    "id": "PKJCLEdvutxM7wrQ",
+                    "name": "Google Sheets account"
+                  }
+                }
+              },
+              "messages": [],
+              "message": "The column \"\" could not be found",
+              "stack": "NodeOperationError: The column \"\" could not be found\n    at GoogleSheet.lookupValues (/usr/local/lib/node_modules/n8n/node_modules/.pnpm/n8n-nodes-base@file+packages+nodes-base_@aws-sdk+credential-providers@3.808.0_asn1.js@5_8da18263ca0574b0db58d4fefd8173ce/node_modules/n8n-nodes-base/nodes/Google/Sheet/v2/helpers/GoogleSheet.ts:764:13)\n    at ExecuteContext.readSheet (/usr/local/lib/node_modules/n8n/node_modules/.pnpm/n8n-nodes-base@file+packages+nodes-base_@aws-sdk+credential-providers@3.808.0_asn1.js@5_8da18263ca0574b0db58d4fefd8173ce/node_modules/n8n-nodes-base/nodes/Google/Sheet/v2/actions/utils/readOperation.ts:91:30)\n    at processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at ExecuteContext.execute (/usr/local/lib/node_modules/n8n/node_modules/.pnpm/n8n-nodes-base@file+packages+nodes-base_@aws-sdk+credential-providers@3.808.0_asn1.js@5_8da18263ca0574b0db58d4fefd8173ce/node_modules/n8n-nodes-base/nodes/Google/Sheet/v2/actions/sheet/read.operation.ts:186:16)\n    at ExecuteContext.router (/usr/local/lib/node_modules/n8n/node_modules/.pnpm/n8n-nodes-base@file+packages+nodes-base_@aws-sdk+credential-providers@3.808.0_asn1.js@5_8da18263ca0574b0db58d4fefd8173ce/node_modules/n8n-nodes-base/nodes/Google/Sheet/v2/actions/router.ts:64:14)\n    at ExecuteContext.execute (/usr/local/lib/node_modules/n8n/node_modules/.pnpm/n8n-nodes-base@file+packages+nodes-base_@aws-sdk+credential-providers@3.808.0_asn1.js@5_8da18263ca0574b0db58d4fefd8173ce/node_modules/n8n-nodes-base/nodes/Google/Sheet/v2/GoogleSheetsV2.node.ts:30:10)\n    at WorkflowExecute.executeNode (/usr/local/lib/node_modules/n8n/node_modules/.pnpm/n8n-core@file+packages+core_@opentelemetry+api@1.9.0_@opentelemetry+exporter-trace-otlp_09b6de71aa48ba17834bf7615757388b/node_modules/n8n-core/src/execution-engine/workflow-execute.ts:1053:9)\n    at WorkflowExecute.runNode (/usr/local/lib/node_modules/n8n/node_modules/.pnpm/n8n-core@file+packages+core_@opentelemetry+api@1.9.0_@opentelemetry+exporter-trace-otlp_09b6de71aa48ba17834bf7615757388b/node_modules/n8n-core/src/execution-engine/workflow-execute.ts:1327:11)\n    at /usr/local/lib/node_modules/n8n/node_modules/.pnpm/n8n-core@file+packages+core_@opentelemetry+api@1.9.0_@opentelemetry+exporter-trace-otlp_09b6de71aa48ba17834bf7615757388b/node_modules/n8n-core/src/execution-engine/workflow-execute.ts:1778:27\n    at /usr/local/lib/node_modules/n8n/node_modules/.pnpm/n8n-core@file+packages+core_@opentelemetry+api@1.9.0_@opentelemetry+exporter-trace-otlp_09b6de71aa48ba17834bf7615757388b/node_modules/n8n-core/src/execution-engine/workflow-execute.ts:2426:11"
+            },
+            "lastNodeExecuted": "Fetch Pending Leads",
+            "mode": "trigger",
+            "executionContext": {
+              "version": 1,
+              "establishedAt": 1783961578010,
+              "source": "trigger",
+              "redaction": {
+                "version": 1,
+                "policy": "none"
+              },
+              "triggerNode": {
+                "name": "Check Schedule",
+                "type": "n8n-nodes-base.scheduleTrigger"
+              }
+            }
+          },
+          "workflow": {
+            "id": "YpImpbVhwpWJPf4I",
+            "name": "Cleaning Bee Intake Engine"
+          }
+        },
+        "pairedItem": {
+          "item": 0
+        }
+      }
+    ]
+  },
+  "connections": {
+    "Error Trigger": {
+      "main": [
+        [
+          {
+            "node": "Send Error Notification",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "timeSavedMode": "fixed",
+    "callerPolicy": "workflowsFromSameOwner",
+    "availableInMCP": false
+  },
+  "versionId": "c8ab9caa-6048-4a65-88f0-08b86f285fcf",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "50824c1af21bce57a98040904ff7ba425e52c902ff76f6105944f37b79b0806c"
+  },
+  "nodeGroups": [],
+  "id": "BnEBdfPRvrSZQNmQ",
+  "tags": []
+}

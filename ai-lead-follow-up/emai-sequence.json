@@ -1,0 +1,1020 @@
+{
+  "name": "Email Sequence",
+  "nodes": [
+    {
+      "parameters": {
+        "workflowInputs": {
+          "values": [
+            {
+              "name": "recordId"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -1120,
+        -144
+      ],
+      "id": "69840bdf-b5cf-4b32-b79b-b3943bc8570d",
+      "name": "Trigger — Called from W1"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "ee15ac65-8885-4abe-9a1e-da6cf29265dc",
+              "leftValue": "={{ $json.recordId }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -896,
+        -48
+      ],
+      "id": "c1a674cb-2095-4eb4-95df-c2f9b3ef9843",
+      "name": "IF — Direct Call or Cron?"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "const fields = $json.fields || {};\nreturn {\n  recordId: $json.id,\n  name: fields.Name,\n  email: fields.Email,\n  phone: fields.Phone,\n  serviceInterest: fields['Service Interest'],\n  budgetRange: fields['Budget Range'],\n  timeline: fields.Timeline,\n  message: fields.Message,\n  score: fields.Score,\n  scoreReason: fields['Score Reason'],\n  urgency: fields.Urgency,\n  sequence: fields.Sequence,\n  status: fields.Status,\n  emailsSent: fields['Emails Sent'] || 0,\n  nextStep: fields['Next Step'] || 'Email 1',\n  nextEmailAt: fields['Next Email At']\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -448,
+        -144
+      ],
+      "id": "637f6c86-6663-4ffa-9b98-bfdbe8fcf146",
+      "name": "Code — Flatten Lead Data"
+    },
+    {
+      "parameters": {
+        "base": {
+          "__rl": true,
+          "value": "appCKBJvU3bS9yyPH",
+          "mode": "list",
+          "cachedResultName": "AI Lead Follow-Up Engine",
+          "cachedResultUrl": "https://airtable.com/[airtable-link]"
+        },
+        "table": {
+          "__rl": true,
+          "value": "tblnUCHMTzOYTepnn",
+          "mode": "list",
+          "cachedResultName": "Leads",
+          "cachedResultUrl": "https://airtable.com/[airtable-link]"
+        },
+        "id": "={{ $json.recordId }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.2,
+      "position": [
+        -672,
+        -144
+      ],
+      "id": "0a1e364f-0627-488e-8a8f-336baa3680fc",
+      "name": "Airtable — Get Lead by ID",
+      "credentials": {
+        "airtableTokenApi": {
+          "id": "NR1xkV4v79dyV7IW",
+          "name": "Airtable Personal Access Token account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "search",
+        "base": {
+          "__rl": true,
+          "value": "appCKBJvU3bS9yyPH",
+          "mode": "list",
+          "cachedResultName": "AI Lead Follow-Up Engine",
+          "cachedResultUrl": "https://airtable.com/[airtable-link]"
+        },
+        "table": {
+          "__rl": true,
+          "value": "tblnUCHMTzOYTepnn",
+          "mode": "list",
+          "cachedResultName": "Leads",
+          "cachedResultUrl": "https://airtable.com/[airtable-link]"
+        },
+        "filterByFormula": "AND(   {Status} = \"Active\",   {Next Step} != \"Done\",   {Next Email At} <= TODAY() )",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.2,
+      "position": [
+        -672,
+        48
+      ],
+      "id": "2dcd6d02-4738-4a40-b3e2-bd5d7a4adcfa",
+      "name": "Airtable — Search Due Leads",
+      "credentials": {
+        "airtableTokenApi": {
+          "id": "NR1xkV4v79dyV7IW",
+          "name": "Airtable Personal Access Token account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "const fields = $json.fields || {};\nreturn {\n  recordId: $json.id,\n  name: fields.Name,\n  email: fields.Email,\n  phone: fields.Phone,\n  serviceInterest: fields['Service Interest'],\n  budgetRange: fields['Budget Range'],\n  timeline: fields.Timeline,\n  message: fields.Message,\n  score: fields.Score,\n  scoreReason: fields['Score Reason'],\n  urgency: fields.Urgency,\n  sequence: fields.Sequence,\n  status: fields.Status,\n  emailsSent: fields['Emails Sent'] || 0,\n  nextStep: fields['Next Step'] || 'Email 1',\n  nextEmailAt: fields['Next Email At']\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -448,
+        48
+      ],
+      "id": "1ce84ae9-86eb-4c45-84bf-b0ea508f40d8",
+      "name": "Code — Flatten Leads"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "5fe35cf5-d03b-4d90-9fbb-40061d07a1db",
+              "name": "recordId",
+              "value": "={{ $json.recordId }}",
+              "type": "string"
+            },
+            {
+              "id": "578428c9-2eed-4093-bafa-65e968b12ca9",
+              "name": "name",
+              "value": "={{ $json.name }}",
+              "type": "string"
+            },
+            {
+              "id": "6ef6ca62-1ed5-461a-bc94-bf74d36cc2bd",
+              "name": "email",
+              "value": "={{ $json.email }}",
+              "type": "string"
+            },
+            {
+              "id": "7f5b2acb-b47c-4cd3-8ce9-a346b3e91d83",
+              "name": "serviceInterest",
+              "value": "={{ $json.serviceInterest }}",
+              "type": "string"
+            },
+            {
+              "id": "28553d0b-7b40-4fa2-9539-de7ec926b248",
+              "name": "message",
+              "value": "={{ $json.message }}",
+              "type": "string"
+            },
+            {
+              "id": "4136bdc5-b9de-48d4-91cd-39cd92f3d140",
+              "name": "nextStep",
+              "value": "={{ $json.nextStep }}",
+              "type": "string"
+            },
+            {
+              "id": "80b51a33-e9b0-4ebe-9d13-1137442d4bb4",
+              "name": "emailsSent",
+              "value": "={{ $json.emailsSent }}",
+              "type": "number"
+            },
+            {
+              "id": "5c259873-1a47-4443-82e8-24bfd992e2f3",
+              "name": "budgetRange",
+              "value": "={{ $json.budgetRange }}",
+              "type": "string"
+            },
+            {
+              "id": "2b0e5ae2-8821-4fa9-b6ec-f506bac56a2c",
+              "name": "sequence",
+              "value": "={{ $json.sequence }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        0,
+        -144
+      ],
+      "id": "0b6cf6f2-018c-40c3-ade3-1e5212d38098",
+      "name": "Set — Prepare Email Gen Context"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "839246d6-f77f-4f22-a6e5-fe3da0236b15",
+              "leftValue": "={{ $json.email }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -224,
+        -48
+      ],
+      "id": "252ff147-e4d6-43ca-93e4-2ef4d45b9802",
+      "name": "IF — Email Valid?"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "const parsed = JSON.parse($json.choices[0].message.content);\nreturn {\n  subject: parsed.subject,\n  body: parsed.body\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        448,
+        -224
+      ],
+      "id": "a1c6df99-a172-468e-b4d2-ef390634caae",
+      "name": "Code — Parse Email Content"
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $('Set — Prepare Email Gen Context').item.json.email }}",
+        "subject": "={{ $json.subject }}",
+        "emailType": "text",
+        "message": "={{ $json.body }}",
+        "options": {
+          "appendAttribution": false,
+          "senderName": "Flow Automation"
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        672,
+        -224
+      ],
+      "id": "2622da3b-1336-4fbd-85ea-a95196cfd022",
+      "name": "Gmail — Send Email",
+      "webhookId": "054f6f38-7454-4a80-8c57-ece45ed48222",
+      "retryOnFail": false,
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "vbsKC01G32vSea05",
+          "name": "Gmail account"
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "64fe6918-5f4b-4f37-a2e8-71502146760e",
+              "name": "recordId",
+              "value": "={{ $('Set — Prepare Email Gen Context').item.json.recordId }}",
+              "type": "string"
+            },
+            {
+              "id": "00749fd9-7a30-4094-a65e-8df0d7a68ff4",
+              "name": "emailsSent",
+              "value": "={{ $('Set — Prepare Email Gen Context').item.json.emailsSent + 1 }}",
+              "type": "number"
+            },
+            {
+              "id": "8b3ad4e8-f0ca-490a-9a78-a6a97abee19a",
+              "name": "currentStep",
+              "value": "={{ $('Set — Prepare Email Gen Context').item.json.nextStep }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        896,
+        -272
+      ],
+      "id": "d59b0428-4bf3-476f-b9f6-e7c2b2415c4d",
+      "name": "Code — Calculate Next Step"
+    },
+    {
+      "parameters": {
+        "jsCode": "const currentStep = $input.first().json.currentStep\nconst now = new Date();\n\nlet nextStep, nextEmailAt, status;\n\nswitch (currentStep) {\n  case 'Email 1':\n    nextStep = 'Email 2';\n    nextEmailAt = new Date(now.getTime() + 24 * 60 * 60 * 1000);\n    status = 'Active';\n    break;\n  case 'Email 2':\n    nextStep = 'Email 3';\n    nextEmailAt = new Date(now.getTime() + 48 * 60 * 60 * 1000);\n    status = 'Active';\n    break;\n  case 'Email 3':\n    nextStep = 'Email 4';\n    nextEmailAt = new Date(now.getTime() + 96 * 60 * 60 * 1000);\n    status = 'Active';\n    break;\n  case 'Email 4':\n    nextStep = 'Done';\n    nextEmailAt = null;\n    status = 'Cold'; // No reply after full sequence\n    break;\n  default:\n    nextStep = 'Done';\n    nextEmailAt = null;\n    status = 'Active';\n}\n\nreturn {\n  recordId: $input.first().json.recordId,\n  emailsSent: $input.first().json.emailsSent,\n  lastEmailSent: now.toISOString(),\n  nextStep: nextStep,\n  nextEmailAt: nextEmailAt ? nextEmailAt.toISOString().split('T')[0] : null,\n  status: status\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1120,
+        -272
+      ],
+      "id": "559a3e8a-74e0-4ce3-a066-91174362718f",
+      "name": "Code — Calculate Next Step1"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://hooks.slack.com/services/[slack-http-request]",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"text\": \"*⚠️ Email Sequence Failed*\\n*Lead:* {{ $('Set — Prepare Email Gen Context').item.json.name }}\\n*Email:* {{ $('Set — Prepare Email Gen Context').item.json.email }}\\n*Step:* {{ $('Set — Prepare Email Gen Context').item.json.nextStep }}\\n*Error:* {{ $json.error.message }}\\n*Action:* Check Gmail quota or OpenRouter status and re-trigger manually.\"\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        896,
+        -48
+      ],
+      "id": "1575b7bc-d736-4ac6-ace6-b221c8eaf350",
+      "name": "Slack - Email Failed"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://hooks.slack.com/services/[slack-http-request]",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"text\": \"Error: Invalid Email\"\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        0,
+        48
+      ],
+      "id": "4fb965fe-2588-44aa-ab85-45d82b65e89c",
+      "name": "Slack - Valid Email Failed"
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "base": {
+          "__rl": true,
+          "value": "appCKBJvU3bS9yyPH",
+          "mode": "list",
+          "cachedResultName": "AI Lead Follow-Up Engine",
+          "cachedResultUrl": "https://airtable.com/[airtable-link]"
+        },
+        "table": {
+          "__rl": true,
+          "value": "tblnUCHMTzOYTepnn",
+          "mode": "list",
+          "cachedResultName": "Leads",
+          "cachedResultUrl": "https://airtable.com/[airtable-link]"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "id": "={{ $json.recordId }}",
+            "Emails Sent": "={{ $json.emailsSent }}",
+            "Last Email Sent": "={{ $json.lastEmailSent }}",
+            "Next Step": "={{ $json.nextStep }}",
+            "Next Email At": "={{ $json.nextEmailAt }}",
+            "Status": "={{ $json.status }}"
+          },
+          "matchingColumns": [
+            "id"
+          ],
+          "schema": [
+            {
+              "id": "id",
+              "displayName": "id",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": false
+            },
+            {
+              "id": "Name",
+              "displayName": "Name",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Email",
+              "displayName": "Email",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Phone",
+              "displayName": "Phone",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Service Interest",
+              "displayName": "Service Interest",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Budget Range",
+              "displayName": "Budget Range",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "options",
+              "options": [
+                {
+                  "name": "$500–$1k",
+                  "value": "$500–$1k"
+                },
+                {
+                  "name": "$1k–$2.5k",
+                  "value": "$1k–$2.5k"
+                },
+                {
+                  "name": "$2.5k+",
+                  "value": "$2.5k+"
+                }
+              ],
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Timeline",
+              "displayName": "Timeline",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "options",
+              "options": [
+                {
+                  "name": "This week",
+                  "value": "This week"
+                },
+                {
+                  "name": "This month",
+                  "value": "This month"
+                },
+                {
+                  "name": "Just exploring",
+                  "value": "Just exploring"
+                }
+              ],
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Message",
+              "displayName": "Message",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Score",
+              "displayName": "Score",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Score Reason",
+              "displayName": "Score Reason",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Urgency",
+              "displayName": "Urgency",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "options",
+              "options": [
+                {
+                  "name": "High",
+                  "value": "High"
+                },
+                {
+                  "name": "Medium",
+                  "value": "Medium"
+                },
+                {
+                  "name": "Low",
+                  "value": "Low"
+                }
+              ],
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Sequence",
+              "displayName": "Sequence",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "options",
+              "options": [
+                {
+                  "name": "Hot",
+                  "value": "Hot"
+                },
+                {
+                  "name": "Nurture",
+                  "value": "Nurture"
+                }
+              ],
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Status",
+              "displayName": "Status",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "options",
+              "options": [
+                {
+                  "name": "Prospect",
+                  "value": "Prospect"
+                },
+                {
+                  "name": "Active",
+                  "value": "Active"
+                },
+                {
+                  "name": "Replied",
+                  "value": "Replied"
+                },
+                {
+                  "name": "Closed",
+                  "value": "Closed"
+                },
+                {
+                  "name": "Cold",
+                  "value": "Cold"
+                }
+              ],
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Emails Sent",
+              "displayName": "Emails Sent",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Last Email Sent",
+              "displayName": "Last Email Sent",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "dateTime",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Next Step",
+              "displayName": "Next Step",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "options",
+              "options": [
+                {
+                  "name": "Email 1",
+                  "value": "Email 1"
+                },
+                {
+                  "name": "Email 2",
+                  "value": "Email 2"
+                },
+                {
+                  "name": "Email 3",
+                  "value": "Email 3"
+                },
+                {
+                  "name": "Email 4",
+                  "value": "Email 4"
+                },
+                {
+                  "name": "Done",
+                  "value": "Done"
+                }
+              ],
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Replied At",
+              "displayName": "Replied At",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "dateTime",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Created At",
+              "displayName": "Created At",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Next Email At",
+              "displayName": "Next Email At",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "dateTime",
+              "readOnly": false,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {
+          "typecast": true
+        }
+      },
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.2,
+      "position": [
+        1344,
+        -272
+      ],
+      "id": "2602e95b-1de0-4414-a454-edb7accfb0f0",
+      "name": "Airtable — Update Lead Record",
+      "credentials": {
+        "airtableTokenApi": {
+          "id": "NR1xkV4v79dyV7IW",
+          "name": "Airtable Personal Access Token account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "hours"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        -1120,
+        48
+      ],
+      "id": "8aaad02d-3fb4-45c0-ae4e-bff6c8140074",
+      "name": "Cron — Every 30 Minutes"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.groq.com/openai/v1/chat/completions",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "openAiApi",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"model\": \"llama-3.3-70b-versatile\",\n  \"messages\": [\n    {\n      \"role\": \"system\",\n      \"content\": \"You are an email outreach specialist for an automation agency called Flow Automation. We build n8n workflows for service businesses.\\n\\nWrite a polished, professional email based on the template below. It should sound like a confident agency wrote it — warm but not casual, compelling but not pushy.\\n\\nTemplate for Email 1 (Day 0 — Immediate Introduction):\\n  Subject: ⟶ Following up on [their service interest]\\n  Body: Acknowledge their message personally and use their name → Briefly introduce Flow Automation with a clear value statement → CTA: suggest a 15-min discovery call this week\\n  \\nTemplate for Email 2 (Day 1 — Case Study):\\n  Subject: 📈 [Service interest] — how we helped a similar business\\n  Body: Lead with empathy for their situation → Share a specific result or case study → Soft CTA to explore whether a similar approach could work for them\\n  \\nTemplate for Email 3 (Day 3 — Objection + ROI):\\n  Subject: 💰 The ROI of automating [their service interest]\\n  Body: Address the unspoken concern (cost, time, or complexity) → Frame ROI with a concrete example → Reiterate availability for a quick call to see if there's a fit\\n  \\nTemplate for Email 4 (Day 7 — Breakup):\\n  Subject: 🔔 Wrapping up — last chance to connect\\n  Body: Respectfully acknowledge the silence → Gentle urgency (we're focusing on active projects) → Final invitation to book a call → Leave the door genuinely open for future outreach\\n\\nRules:\\n- Write 3-4 short paragraphs separated by blank lines — use \\\\n\\\\n between paragraphs in the JSON body value\\n- Start with \\\"Hi [Name],\\\" on its own line, then a blank line (\\\\n\\\\n), then the body\\n- Subject line must be compelling and reference their specific interest — no generic subjects like \\\"Re: [service]\\\"\\n- May use one subtle icon in the subject line (e.g. ⟶, 📈, 💰, 🔔) — never in the email body\\n- Do not hard-wrap lines within paragraphs — only use \\\\n for greeting/signature and \\\\n\\\\n between paragraphs\\n- No markdown formatting (no bold, no italics)\\n- Always sign with \\\"Best Regards,\\\" on one line and \\\"Flow Automation\\\" on the next line (use \\\\n between signature lines)\\n\\nReturn the output as JSON:\\n{\\n  \\\"subject\\\": \\\"compelling subject line\\\",\\n  \\\"body\\\": \\\"Hi [Name].\\\\n\\\\nParagraph one.\\\\n\\\\nParagraph two.\\\\n\\\\nBest Regards,\\\\nFlow Automation\\\"\\n}\"\n    },\n    {\n      \"role\": \"user\",\n      \"content\": \"Generate {{ $json.nextStep }} for this lead:\\n\\nName: {{ $json.name }}\\nService Interest: {{ $json.serviceInterest }}\\nOriginal Message: {{ $json.message }}\\nBudget: {{ $json.budgetRange }}\\nSequence: {{ $json.sequence }}\"\n    }\n  ],\n  \"temperature\": 0.7,\n  \"max_tokens\": 600,\n  \"response_format\": { \"type\": \"json_object\" }\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        224,
+        -144
+      ],
+      "id": "4c847264-361e-4f6d-847c-86ff17824b73",
+      "name": "HTTP — Generate Email via Groq",
+      "retryOnFail": true,
+      "maxTries": 2,
+      "waitBetweenTries": 5000,
+      "credentials": {
+        "openAiApi": {
+          "id": "1qSGKKzqrNb6cUV4",
+          "name": "Groq API Credential"
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "content": "",
+        "height": 672,
+        "width": 2864,
+        "color": 2
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -1248,
+        -384
+      ],
+      "id": "e5dcd385-3429-4e3f-935a-8bc928ce4985",
+      "name": "Sticky Note"
+    }
+  ],
+  "pinData": {
+    "Trigger — Called from W1": [
+      {
+        "json": {
+          "recordId": "rec7s4CTbFcFbFsUH"
+        }
+      }
+    ]
+  },
+  "connections": {
+    "Trigger — Called from W1": {
+      "main": [
+        [
+          {
+            "node": "IF — Direct Call or Cron?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF — Direct Call or Cron?": {
+      "main": [
+        [
+          {
+            "node": "Airtable — Get Lead by ID",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Airtable — Search Due Leads",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Airtable — Get Lead by ID": {
+      "main": [
+        [
+          {
+            "node": "Code — Flatten Lead Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Airtable — Search Due Leads": {
+      "main": [
+        [
+          {
+            "node": "Code — Flatten Leads",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code — Flatten Lead Data": {
+      "main": [
+        [
+          {
+            "node": "IF — Email Valid?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code — Flatten Leads": {
+      "main": [
+        [
+          {
+            "node": "IF — Email Valid?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF — Email Valid?": {
+      "main": [
+        [
+          {
+            "node": "Set — Prepare Email Gen Context",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Slack - Valid Email Failed",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set — Prepare Email Gen Context": {
+      "main": [
+        [
+          {
+            "node": "HTTP — Generate Email via Groq",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code — Parse Email Content": {
+      "main": [
+        [
+          {
+            "node": "Gmail — Send Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gmail — Send Email": {
+      "main": [
+        [
+          {
+            "node": "Code — Calculate Next Step",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Slack - Email Failed",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code — Calculate Next Step": {
+      "main": [
+        [
+          {
+            "node": "Code — Calculate Next Step1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code — Calculate Next Step1": {
+      "main": [
+        [
+          {
+            "node": "Airtable — Update Lead Record",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Cron — Every 30 Minutes": {
+      "main": [
+        [
+          {
+            "node": "IF — Direct Call or Cron?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP — Generate Email via Groq": {
+      "main": [
+        [
+          {
+            "node": "Code — Parse Email Content",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Slack - Email Failed",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "timeSavedMode": "fixed",
+    "errorWorkflow": "BnEBdfPRvrSZQNmQ",
+    "callerPolicy": "workflowsFromSameOwner",
+    "availableInMCP": false
+  },
+  "versionId": "d32162bc-7b75-444a-ae92-8059d1e671c1",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "50824c1af21bce57a98040904ff7ba425e52c902ff76f6105944f37b79b0806c"
+  },
+  "nodeGroups": [],
+  "id": "mKa8FXwD9HwkqfXp",
+  "tags": []
+}

@@ -1,0 +1,964 @@
+{
+  "name": "Lead Intake & Score",
+  "nodes": [
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "const parsed = JSON.parse($json.choices[0].message.content);\nreturn {\n  score: parsed.score,\n  scoreReason: parsed.reason,\n  urgency: parsed.urgency\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        736,
+        176
+      ],
+      "id": "ca669faa-7cde-4a53-bb8e-b35ba0e2b4d4",
+      "name": "Code — Parse Score JSON"
+    },
+    {
+      "parameters": {
+        "operation": "create",
+        "base": {
+          "__rl": true,
+          "value": "appCKBJvU3bS9yyPH",
+          "mode": "list",
+          "cachedResultName": "AI Lead Follow-Up Engine",
+          "cachedResultUrl": "https://airtable.com/[airtable-link]"
+        },
+        "table": {
+          "__rl": true,
+          "value": "tblnUCHMTzOYTepnn",
+          "mode": "list",
+          "cachedResultName": "Leads",
+          "cachedResultUrl": "https://airtable.com/[airtable-link]"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Name": "={{ $json.name }}",
+            "Email": "={{ $json.email }}",
+            "Phone": "={{ $json.phone }}",
+            "Service Interest": "={{ $json.serviceInterest }}",
+            "Budget Range": "={{ $json.budgetRange }}",
+            "Timeline": "={{ $json.timeline }}",
+            "Message": "={{ $json.message }}",
+            "Score": "={{ $json.score }}",
+            "Score Reason": "={{ $json.scoreReason }}",
+            "Urgency": "={{ $json.urgency }}",
+            "Status": "={{ $json.status }}",
+            "Emails Sent": "={{ $json.emailsSent }}",
+            "Next Step": "={{ $json.nextStep }}",
+            "Sequence": "={{ $json.sequence }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Name",
+              "displayName": "Name",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Email",
+              "displayName": "Email",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Phone",
+              "displayName": "Phone",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Service Interest",
+              "displayName": "Service Interest",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Budget Range",
+              "displayName": "Budget Range",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "options",
+              "options": [
+                {
+                  "name": "$500–$1k",
+                  "value": "$500–$1k"
+                },
+                {
+                  "name": "$1k–$2.5k",
+                  "value": "$1k–$2.5k"
+                },
+                {
+                  "name": "$2.5k+",
+                  "value": "$2.5k+"
+                }
+              ],
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Timeline",
+              "displayName": "Timeline",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "options",
+              "options": [
+                {
+                  "name": "This week",
+                  "value": "This week"
+                },
+                {
+                  "name": "This month",
+                  "value": "This month"
+                },
+                {
+                  "name": "Just exploring",
+                  "value": "Just exploring"
+                }
+              ],
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Message",
+              "displayName": "Message",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Score",
+              "displayName": "Score",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Score Reason",
+              "displayName": "Score Reason",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Urgency",
+              "displayName": "Urgency",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "options",
+              "options": [
+                {
+                  "name": "High",
+                  "value": "High"
+                },
+                {
+                  "name": "Medium",
+                  "value": "Medium"
+                },
+                {
+                  "name": "Low",
+                  "value": "Low"
+                }
+              ],
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Sequence",
+              "displayName": "Sequence",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "options",
+              "options": [
+                {
+                  "name": "Hot",
+                  "value": "Hot"
+                },
+                {
+                  "name": "Nurture",
+                  "value": "Nurture"
+                }
+              ],
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Status",
+              "displayName": "Status",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "options",
+              "options": [
+                {
+                  "name": "Prospect",
+                  "value": "Prospect"
+                },
+                {
+                  "name": "Active",
+                  "value": "Active"
+                },
+                {
+                  "name": "Replied",
+                  "value": "Replied"
+                },
+                {
+                  "name": "Closed",
+                  "value": "Closed"
+                },
+                {
+                  "name": "Cold",
+                  "value": "Cold"
+                }
+              ],
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Emails Sent",
+              "displayName": "Emails Sent",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Last Email Sent",
+              "displayName": "Last Email Sent",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "dateTime",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Next Step",
+              "displayName": "Next Step",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "options",
+              "options": [
+                {
+                  "name": "Email 1",
+                  "value": "Email 1"
+                },
+                {
+                  "name": "Email 2",
+                  "value": "Email 2"
+                },
+                {
+                  "name": "Email 3",
+                  "value": "Email 3"
+                },
+                {
+                  "name": "Email 4",
+                  "value": "Email 4"
+                },
+                {
+                  "name": "Done",
+                  "value": "Done"
+                }
+              ],
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Replied At",
+              "displayName": "Replied At",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "dateTime",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Created At",
+              "displayName": "Created At",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.2,
+      "position": [
+        1184,
+        176
+      ],
+      "id": "4ab17175-c2bc-4cb0-8bf9-1bc05739a60e",
+      "name": "Airtable — Create Lead Record",
+      "credentials": {
+        "airtableTokenApi": {
+          "id": "NR1xkV4v79dyV7IW",
+          "name": "Airtable Personal Access Token account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "c3a3ef64-37e2-4c27-92f6-10a4f00b1cd0",
+              "leftValue": "={{ $('Code — Parse Score JSON').item.json.score }}",
+              "rightValue": 7,
+              "operator": {
+                "type": "number",
+                "operation": "gte"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        1408,
+        176
+      ],
+      "id": "abcff37c-deea-42f0-b9fc-e62731c2c9ec",
+      "name": "IF — Hot or Nurture?"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://hooks.slack.com/services/[request-url]",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"text\": \"*🔥 Hot Lead Alert*\\n*Name:* {{ $('Set — Prepare Airtable Data').item.json.name }}\\n*Score:* {{ $('Set — Prepare Airtable Data').item.json.score }}/10\\n*Reason:* {{ $('Set — Prepare Airtable Data').item.json.scoreReason }}\\n*Service:* {{ $('Set — Prepare Airtable Data').item.json.serviceInterest }}\\n*Budget:* {{ $('Set — Prepare Airtable Data').item.json.budgetRange }}\\n*Timeline:* {{ $('Set — Prepare Airtable Data').item.json.timeline }}\\n*Message:* {{ $('Set — Prepare Airtable Data').item.json.message }}\"\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        1632,
+        80
+      ],
+      "id": "be6cc575-5247-4ab7-9662-faa4f9505bad",
+      "name": "HTTP Request"
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "mKa8FXwD9HwkqfXp",
+          "mode": "list",
+          "cachedResultUrl": "/workflow/mKa8FXwD9HwkqfXp",
+          "cachedResultName": "Email Sequence"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "recordId": "={{ $('Airtable — Create Lead Record').item.json.id }}"
+          },
+          "matchingColumns": [
+            "recordId"
+          ],
+          "schema": [
+            {
+              "id": "recordId",
+              "displayName": "recordId",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": true
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.3,
+      "position": [
+        1856,
+        80
+      ],
+      "id": "a9f0091b-c83e-45a5-bef5-80302637bf19",
+      "name": "Sub — Hot Sequence"
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "mKa8FXwD9HwkqfXp",
+          "mode": "list",
+          "cachedResultUrl": "/workflow/mKa8FXwD9HwkqfXp",
+          "cachedResultName": "Email Sequence"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "recordId": "={{ $('Airtable — Create Lead Record').item.json.id }}"
+          },
+          "matchingColumns": [
+            "recordId"
+          ],
+          "schema": [
+            {
+              "id": "recordId",
+              "displayName": "recordId",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": true
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.3,
+      "position": [
+        1632,
+        272
+      ],
+      "id": "c0719c83-107f-4be1-b3cb-00e224529883",
+      "name": "Sub — Nurture Sequence"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://hooks.slack.com/services/[request-url]",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"text\": \"*⚠️ Lead Scoring Failed*\\n*Name:* {{$json.name}}\\n*Email:* {{ $json.email }}\\n*Error:* {{ $json.error ? $json.error.message : \"OpenRouter upstream error\"}}\\n*Action:* Manually review and score this lead.\"\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        736,
+        368
+      ],
+      "id": "b3347be8-6012-4647-a727-b99261acee98",
+      "name": "Slack — Scoring Failed"
+    },
+    {
+      "parameters": {
+        "formTitle": "Get Started with Flow Automation",
+        "formDescription": "Tell us what you need automated and we'll be in touch within 24 hours.",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "Your Name",
+              "fieldName": "name",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Email Address",
+              "fieldType": "email",
+              "fieldName": "email",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Phone Number",
+              "fieldType": "number",
+              "fieldName": "phone"
+            },
+            {
+              "fieldLabel": "What do you need automated?",
+              "fieldType": "textarea",
+              "fieldName": "message",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Service Interest",
+              "fieldName": "serviceInterest",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Budget Range",
+              "fieldType": "dropdown",
+              "fieldName": "budgetRange",
+              "fieldOptions": {
+                "values": [
+                  {
+                    "option": "$500–$1k"
+                  },
+                  {
+                    "option": "$1k–$2.5k"
+                  },
+                  {
+                    "option": "$2.5k+"
+                  }
+                ]
+              },
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Timeline",
+              "fieldType": "dropdown",
+              "fieldName": "timeline",
+              "fieldOptions": {
+                "values": [
+                  {
+                    "option": "This week"
+                  },
+                  {
+                    "option": "This month"
+                  },
+                  {
+                    "option": "Just exploring"
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        "options": {
+          "path": "lead-intake"
+        }
+      },
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 2.5,
+      "position": [
+        -160,
+        272
+      ],
+      "id": "9f1b3baa-c882-4b90-bef2-9c40055ed541",
+      "name": "Trigger — Lead Intake Form",
+      "webhookId": "68f03764-db49-4909-975a-94acaa4415e1"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "27d30a68-9efb-4641-a185-5817a2f5c448",
+              "name": "name",
+              "value": "={{ $('Trigger — Lead Intake Form').item.json.name }}",
+              "type": "string"
+            },
+            {
+              "id": "710e2616-8168-45f4-b8ec-eeee79cf6335",
+              "name": "email",
+              "value": "={{ $('Trigger — Lead Intake Form').item.json.email }}",
+              "type": "string"
+            },
+            {
+              "id": "dae8d77b-ce81-43b9-aadd-85e673183ce3",
+              "name": "phone",
+              "value": "={{ $('Trigger — Lead Intake Form').item.json.phone ? String($('Trigger — Lead Intake Form').item.json.phone) : null  }}",
+              "type": "string"
+            },
+            {
+              "id": "4cb1c65a-3083-4f22-b323-a0e505e75641",
+              "name": "serviceInterest",
+              "value": "={{ $('Trigger — Lead Intake Form').item.json.serviceInterest }}",
+              "type": "string"
+            },
+            {
+              "id": "105b13dc-b29a-45d8-809b-d34eb1ff1707",
+              "name": "budgetRange",
+              "value": "={{ $('Trigger — Lead Intake Form').item.json.budgetRange }}",
+              "type": "string"
+            },
+            {
+              "id": "27298b88-13a2-4b98-9e75-74317c9131d2",
+              "name": "timeline",
+              "value": "={{ $('Trigger — Lead Intake Form').item.json.timeline }}",
+              "type": "string"
+            },
+            {
+              "id": "4f9ef268-1c06-4135-8550-51bf478f637b",
+              "name": "message",
+              "value": "={{ $('Trigger — Lead Intake Form').item.json.message }}",
+              "type": "string"
+            },
+            {
+              "id": "08599c74-1a21-47b7-ad00-092e9415f316",
+              "name": "score",
+              "value": "={{ $json.score }}",
+              "type": "number"
+            },
+            {
+              "id": "88fc8663-f77e-4884-865e-763737dc952d",
+              "name": "scoreReason",
+              "value": "={{ $json.scoreReason }}",
+              "type": "string"
+            },
+            {
+              "id": "e7fc9750-ef16-436d-b066-e8e78d63c795",
+              "name": "urgency",
+              "value": "={{ $json.urgency ? $json.urgency.toSentenceCase() : null }}",
+              "type": "string"
+            },
+            {
+              "id": "0cda0128-4e79-48b9-b753-7bd188891b68",
+              "name": "status",
+              "value": "Active",
+              "type": "string"
+            },
+            {
+              "id": "7f8b20a0-b29d-493d-8395-9c457133fe31",
+              "name": "emailsSent",
+              "value": 0,
+              "type": "number"
+            },
+            {
+              "id": "ac2b2a82-24da-4ebd-8b3a-159aa2734f6c",
+              "name": "nextStep",
+              "value": "Email 1",
+              "type": "string"
+            },
+            {
+              "id": "955684f5-e7a5-4835-89b0-e74d0bdd64d1",
+              "name": "sequence",
+              "value": "={{ $json.score >= 7 ? \"Hot\" : \"Nurture\" }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        960,
+        176
+      ],
+      "id": "b72e2e1d-b79c-40b8-b110-43e487306fa7",
+      "name": "Set — Prepare Airtable Data"
+    },
+    {
+      "parameters": {
+        "operation": "search",
+        "base": {
+          "__rl": true,
+          "value": "appCKBJvU3bS9yyPH",
+          "mode": "list",
+          "cachedResultName": "AI Lead Follow-Up Engine",
+          "cachedResultUrl": "https://airtable.com/[airtable-link]"
+        },
+        "table": {
+          "__rl": true,
+          "value": "tblnUCHMTzOYTepnn",
+          "mode": "list",
+          "cachedResultName": "Leads",
+          "cachedResultUrl": "https://airtable.com/[airtable-link]"
+        },
+        "filterByFormula": "={Email} = \"{{ $json.email  }}\"",
+        "returnAll": false,
+        "limit": 1,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.2,
+      "position": [
+        64,
+        272
+      ],
+      "id": "871a0c9e-2f78-475c-9e8c-8d1ad28b423f",
+      "name": "Airtable — Search by Email",
+      "alwaysOutputData": true,
+      "credentials": {
+        "airtableTokenApi": {
+          "id": "NR1xkV4v79dyV7IW",
+          "name": "Airtable Personal Access Token account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "d67b504a-0fd8-460d-84ca-d986a18caf11",
+              "leftValue": "={{ $json.id }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        288,
+        272
+      ],
+      "id": "90ecd35d-de1e-4808-a71d-164d1ba261b1",
+      "name": "IF — Email Already Exists?"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.groq.com/openai/v1/chat/completions",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "openAiApi",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"model\": \"llama-3.3-70b-versatile\",\n  \"messages\": [\n{\n  \"role\": \"system\",\n  \"content\": \"You are a lead qualification assistant for an automation agency that builds n8n workflows for service businesses.\\n\\nEvaluate this lead and return a JSON score only. No other text.\\n\\nScoring criteria:\\n- Budget match (business minimum is $1,500): 0–3 pts\\n- Urgency signals in message or Timeline (\\\"ASAP\\\", \\\"this week\\\", \\\"urgent\\\"): 0–3 pts\\n- Service match to core offerings: 0–2 pts\\n- Message quality (detailed vs blank): 0–2 pts\\n\\nReturn format:\\n{\\n  \\\"score\\\": <number 1-10>,\\n  \\\"reason\\\": \\\"<one sentence explanation>\\\",\\n  \\\"urgency\\\": \\\"high | medium | low\\\"\\n}\"\n    },\n    {\n      \"role\": \"user\",\n      \"content\": \"Lead data:\\n- Name: {{ $('Trigger — Lead Intake Form').item.json.name }}\\n- Email: {{ $('Trigger — Lead Intake Form').item.json.email }}\\n- Service Interest: {{ $('Trigger — Lead Intake Form').item.json.serviceInterest }}\\n- Budget: {{ $('Trigger — Lead Intake Form').item.json.budgetRange }}\\n- Timeline: {{ $('Trigger — Lead Intake Form').item.json.timeline }}\\n- Message: {{ $('Trigger — Lead Intake Form').item.json.message }}\\n- Submitted: {{ $('Trigger — Lead Intake Form').item.json.submittedAt }}\"\n    }\n  ],\n  \"temperature\": 0.3,\n  \"max_tokens\": 500,\n  \"response_format\": { \"type\": \"json_object\" }\n}",
+        "options": {
+          "allowUnauthorizedCerts": true
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        512,
+        272
+      ],
+      "id": "abfbea88-cfe6-4bc3-a5e2-7b9f9ab34233",
+      "name": "HTTP — Score via Groq API",
+      "retryOnFail": true,
+      "waitBetweenTries": 5000,
+      "credentials": {
+        "openAiApi": {
+          "id": "1qSGKKzqrNb6cUV4",
+          "name": "Groq API Credential"
+        },
+        "httpHeaderAuth": {
+          "id": "Pn7FfSiRwJkeYXd2",
+          "name": "Header Auth account"
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "content": "",
+        "height": 544,
+        "width": 2384,
+        "color": 2
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -272,
+        16
+      ],
+      "id": "fe7fe09a-49b7-4102-b4b5-9532d08e055a",
+      "name": "Sticky Note"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Code — Parse Score JSON": {
+      "main": [
+        [
+          {
+            "node": "Set — Prepare Airtable Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Airtable — Create Lead Record": {
+      "main": [
+        [
+          {
+            "node": "IF — Hot or Nurture?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF — Hot or Nurture?": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Sub — Nurture Sequence",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "Sub — Hot Sequence",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Sub — Nurture Sequence": {
+      "main": [
+        []
+      ]
+    },
+    "Trigger — Lead Intake Form": {
+      "main": [
+        [
+          {
+            "node": "Airtable — Search by Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set — Prepare Airtable Data": {
+      "main": [
+        [
+          {
+            "node": "Airtable — Create Lead Record",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Airtable — Search by Email": {
+      "main": [
+        [
+          {
+            "node": "IF — Email Already Exists?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF — Email Already Exists?": {
+      "main": [
+        [],
+        [
+          {
+            "node": "HTTP — Score via Groq API",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP — Score via Groq API": {
+      "main": [
+        [
+          {
+            "node": "Code — Parse Score JSON",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Slack — Scoring Failed",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "timeSavedMode": "fixed",
+    "callerPolicy": "workflowsFromSameOwner",
+    "availableInMCP": false,
+    "errorWorkflow": "BnEBdfPRvrSZQNmQ"
+  },
+  "versionId": "42e41dbc-6466-4889-86d4-53e4c9b430e9",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "50824c1af21bce57a98040904ff7ba425e52c902ff76f6105944f37b79b0806c"
+  },
+  "nodeGroups": [],
+  "id": "WrPdGUdCcUoZFbED",
+  "tags": []
+}

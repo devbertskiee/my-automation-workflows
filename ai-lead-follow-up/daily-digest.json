@@ -1,0 +1,360 @@
+{
+  "name": "Daily Digest",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "triggerAtHour": 9
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        -496,
+        -48
+      ],
+      "id": "e62bce3b-2d4f-4ee0-a891-38ef77853ce5",
+      "name": "Trigger — Daily at 9AM"
+    },
+    {
+      "parameters": {
+        "operation": "search",
+        "base": {
+          "__rl": true,
+          "value": "appCKBJvU3bS9yyPH",
+          "mode": "list",
+          "cachedResultName": "AI Lead Follow-Up Engine",
+          "cachedResultUrl": "https://airtable.com/[airtable-link]"
+        },
+        "table": {
+          "__rl": true,
+          "value": "tblnUCHMTzOYTepnn",
+          "mode": "list",
+          "cachedResultName": "Leads",
+          "cachedResultUrl": "https://airtable.com/[airtable-link]"
+        },
+        "filterByFormula": "AND(   {Status} = \"Active\",   {Next Step} != \"Done\" )",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.2,
+      "position": [
+        -272,
+        -48
+      ],
+      "id": "07948f97-472f-4915-98e5-eff91b4cfbea",
+      "name": "Airtable — Active Pipeline",
+      "executeOnce": true,
+      "alwaysOutputData": true,
+      "credentials": {
+        "airtableTokenApi": {
+          "id": "NR1xkV4v79dyV7IW",
+          "name": "Airtable Personal Access Token account"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "operation": "search",
+        "base": {
+          "__rl": true,
+          "value": "appCKBJvU3bS9yyPH",
+          "mode": "list",
+          "cachedResultName": "AI Lead Follow-Up Engine",
+          "cachedResultUrl": "https://airtable.com/[airtable-link]"
+        },
+        "table": {
+          "__rl": true,
+          "value": "tblnUCHMTzOYTepnn",
+          "mode": "list",
+          "cachedResultName": "Leads",
+          "cachedResultUrl": "https://airtable.com/[airtable-link]"
+        },
+        "filterByFormula": "AND(   {Created At} >= DATEADD(TODAY(), -1, 'days'),   {Created At} < TODAY() )",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.2,
+      "position": [
+        -48,
+        -48
+      ],
+      "id": "d89958cf-97b3-44f4-903f-ac53345737db",
+      "name": "Airtable — New Leads Yesterday",
+      "executeOnce": true,
+      "alwaysOutputData": true,
+      "credentials": {
+        "airtableTokenApi": {
+          "id": "NR1xkV4v79dyV7IW",
+          "name": "Airtable Personal Access Token account"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "operation": "search",
+        "base": {
+          "__rl": true,
+          "value": "appCKBJvU3bS9yyPH",
+          "mode": "list",
+          "cachedResultName": "AI Lead Follow-Up Engine",
+          "cachedResultUrl": "https://airtable.com/[airtable-link]"
+        },
+        "table": {
+          "__rl": true,
+          "value": "tblnUCHMTzOYTepnn",
+          "mode": "list",
+          "cachedResultName": "Leads",
+          "cachedResultUrl": "https://airtable.com/[airtable-link]"
+        },
+        "filterByFormula": "AND(   {Status} = \"Replied\",   {Replied At} >= DATEADD(TODAY(), -1, 'days'),   {Replied At} < TODAY() )",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.2,
+      "position": [
+        176,
+        -48
+      ],
+      "id": "e6b1f3bd-f05d-454d-8a76-4f6ae0b7f1d8",
+      "name": "Airtable — Replies Yesterday",
+      "executeOnce": true,
+      "alwaysOutputData": true,
+      "credentials": {
+        "airtableTokenApi": {
+          "id": "NR1xkV4v79dyV7IW",
+          "name": "Airtable Personal Access Token account"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "operation": "search",
+        "base": {
+          "__rl": true,
+          "value": "appCKBJvU3bS9yyPH",
+          "mode": "list",
+          "cachedResultName": "AI Lead Follow-Up Engine",
+          "cachedResultUrl": "https://airtable.com/[airtable-link]"
+        },
+        "table": {
+          "__rl": true,
+          "value": "tblnUCHMTzOYTepnn",
+          "mode": "list",
+          "cachedResultName": "Leads",
+          "cachedResultUrl": "https://airtable.com/[airtable-link]"
+        },
+        "filterByFormula": "AND(   {Status} = \"Active\",   {Next Step} = \"Done\",   {Last Email Sent} >= DATEADD(TODAY(), -1, 'days'),   {Last Email Sent} < TODAY() )",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.2,
+      "position": [
+        400,
+        -48
+      ],
+      "id": "94ebaab5-da99-4afe-bfc8-3a58c8d04f9b",
+      "name": "Airtable — Going Cold",
+      "executeOnce": true,
+      "alwaysOutputData": true,
+      "credentials": {
+        "airtableTokenApi": {
+          "id": "NR1xkV4v79dyV7IW",
+          "name": "Airtable Personal Access Token account"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "4d4ab45f-8743-49fc-9828-1126a3885710",
+              "leftValue": "={{ $json.digestType }}",
+              "rightValue": "digest",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        848,
+        -48
+      ],
+      "id": "5e4e467d-ce76-4ede-a8e9-7753e465a8b2",
+      "name": "IF — Any Data or Empty?"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://hooks.slack.com/services/[slack-http-request]",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"text\": {{ $json.text }}\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        1072,
+        -48
+      ],
+      "id": "10707641-056d-4c20-bbeb-f19a4addb43c",
+      "name": "Slack — Post Digest"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Filter out empty items from \"Always Output Data\" (Airtable nodes that returned 0 records)\nconst hasData = d => d.json && d.json.id;\n\n// Fetch data from all 4 Airtable queries\nconst pipeline = $(\"Airtable — Active Pipeline\").all().filter(hasData);\nconst newLeads = $(\"Airtable — New Leads Yesterday\").all().filter(hasData);\nconst replies = $(\"Airtable — Replies Yesterday\").all().filter(hasData);\nconst coldLeads = $(\"Airtable — Going Cold\").all().filter(hasData);\n\n// Compute pipeline breakdown\nconst totalPipeline = pipeline.length;\nconst hotCount = pipeline.filter(l => (l.json.fields?.Sequence || l.json.Sequence) === \"Hot\").length;\nconst nurtureCount = pipeline.filter(l => (l.json.fields?.Sequence || l.json.Sequence) === \"Nurture\").length;\n\n// Format today's date header\nconst today = new Date().toLocaleDateString('en-US', {\n  weekday: 'short', month: 'short', day: 'numeric'\n});\n\n// Check if ALL sections are empty (including pipeline)\nif (pipeline.length === 0 && newLeads.length === 0 && replies.length === 0 && coldLeads.length === 0) {\n  return [{\n    text: JSON.stringify(`📊 Daily Pipeline Digest — ${today} — Nothing to report. All quiet. ✅`),\n    digestType: \"empty\"\n  }];\n}\n\n// Build the digest message\nlet text = `📊 Daily Pipeline Digest — ${today}\\n\\n`;\ntext += `Active leads in pipeline: ${totalPipeline} (🔥 ${hotCount} Hot · 🌱 ${nurtureCount} Nurture)`;\ntext += '\\n\\n';\n\n// New leads section\ntext += `New leads yesterday: ${newLeads.length}`;\nif (newLeads.length > 0) {\n  newLeads.forEach(l => {\n    const name = l.json.fields?.Name || l.json.Name || 'Unknown';\n    const score = l.json.fields?.Score !== undefined ? `${l.json.fields.Score}/10` : l.json.Score !== undefined ? `${l.json.Score}/10` : 'N/A';\n    const seq = l.json.fields?.Sequence || l.json.Sequence || 'N/A';\n    text += `\\n  • ${name} — Score: ${score} — ${seq}`;\n  });\n}\ntext += '\\n\\n';\n\n// Replies section\ntext += `Replies yesterday: ${replies.length}`;\nif (replies.length > 0) {\n  replies.forEach(l => {\n    const name = l.json.fields?.Name || l.json.Name || 'Unknown';\n    text += `\\n  • ${name} — needs follow-up`;\n  });\n}\ntext += '\\n\\n';\n\n// Going cold section\ntext += `Leads going cold: ${coldLeads.length}`;\nif (coldLeads.length > 0) {\n  coldLeads.forEach(l => {\n    const name = l.json.fields?.Name || l.json.Name || 'Unknown';\n    text += `\\n  • ${name} — no reply after 4 emails`;\n  });\n}\n\nreturn [{ text: JSON.stringify(text), digestType: \"digest\" }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        624,
+        -48
+      ],
+      "id": "dd5cc87a-8572-4104-9fd8-e91cdaf8ddcd",
+      "name": "Code — Format Digest Block"
+    },
+    {
+      "parameters": {
+        "content": "",
+        "height": 400,
+        "width": 1840,
+        "color": 2
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -576,
+        -192
+      ],
+      "id": "a727157b-9c51-45ab-bf7a-460575ac4e45",
+      "name": "Sticky Note"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Trigger — Daily at 9AM": {
+      "main": [
+        [
+          {
+            "node": "Airtable — Active Pipeline",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Airtable — Active Pipeline": {
+      "main": [
+        [
+          {
+            "node": "Airtable — New Leads Yesterday",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Airtable — New Leads Yesterday": {
+      "main": [
+        [
+          {
+            "node": "Airtable — Replies Yesterday",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Airtable — Replies Yesterday": {
+      "main": [
+        [
+          {
+            "node": "Airtable — Going Cold",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Airtable — Going Cold": {
+      "main": [
+        [
+          {
+            "node": "Code — Format Digest Block",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF — Any Data or Empty?": {
+      "main": [
+        [
+          {
+            "node": "Slack — Post Digest",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Slack — Post Digest",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code — Format Digest Block": {
+      "main": [
+        [
+          {
+            "node": "IF — Any Data or Empty?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "timeSavedMode": "fixed",
+    "errorWorkflow": "BnEBdfPRvrSZQNmQ",
+    "callerPolicy": "workflowsFromSameOwner",
+    "availableInMCP": false
+  },
+  "versionId": "399ef0df-8015-445c-a6d3-148a104181e4",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "50824c1af21bce57a98040904ff7ba425e52c902ff76f6105944f37b79b0806c"
+  },
+  "nodeGroups": [],
+  "id": "Q4ZrUnLR93DVB4rP",
+  "tags": []
+}
