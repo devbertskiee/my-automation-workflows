@@ -1,46 +1,31 @@
-# MailTriage
+# Cleaning Bee Intake Engine
+**AI-Powered Lead-to-Booking Automation for Cleaning Services.**
 
-**AI-Powered Email Classification & Triage Pipeline**
+The system ingests email inquiries, classifies leads, auto-replies with quotes and screening questions, checks Google Calendar availability, books appointments, and sends confirmations — all without human intervention.
 
-MailTriage is an automated email organization workflow that uses AI to classify incoming Gmail messages based on their content and automatically apply the appropriate Gmail label.
+---
 
-## Problem
+## The Problem
 
-Important emails can easily get mixed with security alerts, receipts, app notifications, work messages, and other automated emails.
+Cleaning Bee PH handled leads manually:
 
-Manually organizing these emails is repetitive and inconsistent.
+- A human read every email, classified urgency, looked up pricing, typed a quote, checked Google Calendar for availability, replied to schedule, and updated a spreadsheet
+- Response time: **2–6 hours** (same-day at best)
+- Inconsistent quoting and screening across different staff
+- No automated follow-up for scheduling — leads fell through cracks
+- Manual spreadsheet management prone to typos and duplication
 
-## Solution
+**Before:**
+| Metric | Manual |
+|---|---|
+| Lead response time | 2–6 hours |
+| Scheduling | Manual calendar check + email thread |
+| Data entry | Prone to typos, missed rows |
+| Staff hours/week on intake | ~15–20 hrs |
 
-MailTriage automatically monitors incoming emails, analyzes the email body using an LLM, classifies the message into one of eight categories, and applies the corresponding Gmail label.
+---
 
-## Categories
+## The Solution
 
-| Label                          | Description                                                                                                |
-| ------------------------------ | ---------------------------------------------------------------------------------------------------------- |
-| **Action**                     | Emails requiring a meaningful response, decision, approval, submission, update, or other task.             |
-| **Accounts & Security**        | Authentication, verification codes, login activity, password changes, account access, and security alerts. |
-| **Money**                      | Payments, purchases, receipts, invoices, refunds, billing, banking, and subscription transactions.         |
-| **App & System Notifications** | Automated app activity, system alerts, mentions, reports, status updates, and operational notifications.   |
-| **Personal & Life**            | Personal correspondence, travel, reservations, appointments, deliveries, and other personal activities.    |
-| **Work**                       | Professional communication, projects, clients, meetings, workplace updates, and business-related messages. |
-| **Reading & Promotions**       | Newsletters, marketing emails, promotions, product announcements, recommendations, and optional reading.   |
-| **Records**                    | Important archival or reference information that does not require further action.                          |
+A **single n8n workflow with 3 branches** that automates the full intake pipeline.
 
-## Workflow
-
-```mermaid
-flowchart LR
-    A[Gmail Trigger] --> B[Extract Email Body]
-    B --> C[Gemini 3.5 Flash-Lite]
-    C --> D{Classify Email}
-    D --> E[Category Routing]
-    E --> F[Apply Gmail Label]
-```
-
-## Tech Stack
-
-* **n8n** — Workflow automation and orchestration
-* **Gmail API** — Email ingestion and label management
-* **Google Gemini 3.5 Flash-Lite** — Email content classification
-* **Gmail Search & Filters** — Initial inbox filtering and noise reduction

@@ -1,46 +1,18 @@
-# MailTriage
+# AI Lead Follow Up Engine
+**Convert more leads with AI-powered follow-up — no manual emails, no missed opportunities.**
 
-**AI-Powered Email Classification & Triage Pipeline**
+An automated lead follow-up system that qualifies, sequences, and converts inbound leads on autopilot — no manual emails, no leads falling through the cracks.
 
-MailTriage is an automated email organization workflow that uses AI to classify incoming Gmail messages based on their content and automatically apply the appropriate Gmail label.
+## The Problem
 
-## Problem
+**Slow response.** When a lead fills out your form, every hour without a reply increases the chance they'll choose someone else. Most small businesses take hours or days to respond — if they respond at all.
 
-Important emails can easily get mixed with security alerts, receipts, app notifications, work messages, and other automated emails.
+**Inconsistent follow-up.** Busy days mean emails get skipped. A lead who doesn't hear back after the first message falls through the cracks. Manual follow-up depends on someone remembering to do it.
 
-Manually organizing these emails is repetitive and inconsistent.
+**No lead qualification.** Sales time gets wasted on low-quality leads while high-value prospects wait in the same queue. Without a system to separate hot leads from tire-kickers, your team spends energy in the wrong places.
 
-## Solution
+## What It Solves
 
-MailTriage automatically monitors incoming emails, analyzes the email body using an LLM, classifies the message into one of eight categories, and applies the corresponding Gmail label.
+This system handles the first 7 days of lead follow-up completely on autopilot. When a lead submits your intake form, the AI scores them instantly, sends a personalized email within minutes, and continues a timed sequence of 4 emails over 7 days. If they reply, the sequence pauses and you're alerted in Slack. If they never reply, you get a daily summary of who completed the sequence — no more manually checking your inbox or spreadsheets.
 
-## Categories
-
-| Label                          | Description                                                                                                |
-| ------------------------------ | ---------------------------------------------------------------------------------------------------------- |
-| **Action**                     | Emails requiring a meaningful response, decision, approval, submission, update, or other task.             |
-| **Accounts & Security**        | Authentication, verification codes, login activity, password changes, account access, and security alerts. |
-| **Money**                      | Payments, purchases, receipts, invoices, refunds, billing, banking, and subscription transactions.         |
-| **App & System Notifications** | Automated app activity, system alerts, mentions, reports, status updates, and operational notifications.   |
-| **Personal & Life**            | Personal correspondence, travel, reservations, appointments, deliveries, and other personal activities.    |
-| **Work**                       | Professional communication, projects, clients, meetings, workplace updates, and business-related messages. |
-| **Reading & Promotions**       | Newsletters, marketing emails, promotions, product announcements, recommendations, and optional reading.   |
-| **Records**                    | Important archival or reference information that does not require further action.                          |
-
-## Workflow
-
-```mermaid
-flowchart LR
-    A[Gmail Trigger] --> B[Extract Email Body]
-    B --> C[Gemini 3.5 Flash-Lite]
-    C --> D{Classify Email}
-    D --> E[Category Routing]
-    E --> F[Apply Gmail Label]
-```
-
-## Tech Stack
-
-* **n8n** — Workflow automation and orchestration
-* **Gmail API** — Email ingestion and label management
-* **Google Gemini 3.5 Flash-Lite** — Email content classification
-* **Gmail Search & Filters** — Initial inbox filtering and noise reduction
+Instead of scrambling to keep up, you wake up to a pipeline that ran itself.
