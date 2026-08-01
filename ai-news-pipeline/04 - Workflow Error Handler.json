@@ -1,0 +1,255 @@
+{
+    "id":  "[ADD YOUR WORKFLOW ID]",
+    "name":  "04 - Workflow Error Handler",
+    "nodes":  [
+                  {
+                      "parameters":  {
+
+                                     },
+                      "id":  "40000000-0000-4000-8000-000000000001",
+                      "name":  "01. Trigger — Workflow Error",
+                      "type":  "n8n-nodes-base.errorTrigger",
+                      "typeVersion":  1,
+                      "position":  [
+                                       0,
+                                       304
+                                   ]
+                  },
+                  {
+                      "parameters":  {
+                                         "assignments":  {
+                                                             "assignments":  [
+                                                                                 {
+                                                                                     "id":  "40000000-0000-4000-8000-000000000101",
+                                                                                     "name":  "timestamp",
+                                                                                     "type":  "string",
+                                                                                     "value":  "={{ (() =\u003e { const raw = $json.execution?.error?.timestamp; if (typeof raw === \u0027number\u0027) return DateTime.fromMillis(raw).toUTC().toISO(); const parsed = raw ? DateTime.fromISO(String(raw)) : null; return parsed?.isValid ? parsed.toUTC().toISO() : $now.toUTC().toISO(); })() }}"
+                                                                                 },
+                                                                                 {
+                                                                                     "id":  "40000000-0000-4000-8000-000000000102",
+                                                                                     "name":  "workflow_id",
+                                                                                     "type":  "string",
+                                                                                     "value":  "={{ String($json.workflow?.id || \u0027\u0027) }}"
+                                                                                 },
+                                                                                 {
+                                                                                     "id":  "40000000-0000-4000-8000-000000000103",
+                                                                                     "name":  "workflow_name",
+                                                                                     "type":  "string",
+                                                                                     "value":  "={{ String($json.workflow?.name || \u0027Unknown workflow\u0027).slice(0, 200) }}"
+                                                                                 },
+                                                                                 {
+                                                                                     "id":  "40000000-0000-4000-8000-000000000104",
+                                                                                     "name":  "execution_id",
+                                                                                     "type":  "string",
+                                                                                     "value":  "={{ String($json.execution?.id || \u0027\u0027) }}"
+                                                                                 },
+                                                                                 {
+                                                                                     "id":  "40000000-0000-4000-8000-000000000105",
+                                                                                     "name":  "execution_url",
+                                                                                     "type":  "string",
+                                                                                     "value":  "={{ String($json.execution?.url || \u0027\u0027).slice(0, 500) }}"
+                                                                                 },
+                                                                                 {
+                                                                                     "id":  "40000000-0000-4000-8000-000000000106",
+                                                                                     "name":  "failed_node",
+                                                                                     "type":  "string",
+                                                                                     "value":  "={{ String($json.execution?.lastNodeExecuted || \u0027Unknown node\u0027).slice(0, 200) }}"
+                                                                                 },
+                                                                                 {
+                                                                                     "id":  "40000000-0000-4000-8000-000000000107",
+                                                                                     "name":  "error_name",
+                                                                                     "type":  "string",
+                                                                                     "value":  "={{ String($json.execution?.error?.name || \u0027WorkflowError\u0027).slice(0, 120) }}"
+                                                                                 },
+                                                                                 {
+                                                                                     "id":  "40000000-0000-4000-8000-000000000108",
+                                                                                     "name":  "error_message",
+                                                                                     "type":  "string",
+                                                                                     "value":  "Unhandled workflow error. Open the linked execution for details."
+                                                                                 },
+                                                                                 {
+                                                                                     "id":  "40000000-0000-4000-8000-000000000109",
+                                                                                     "name":  "execution_mode",
+                                                                                     "type":  "string",
+                                                                                     "value":  "={{ String($json.execution?.mode || \u0027unknown\u0027).slice(0, 50) }}"
+                                                                                 },
+                                                                                 {
+                                                                                     "id":  "40000000-0000-4000-8000-000000000110",
+                                                                                     "name":  "status",
+                                                                                     "type":  "string",
+                                                                                     "value":  "open"
+                                                                                 },
+                                                                                 {
+                                                                                     "id":  "40000000-0000-4000-8000-000000000111",
+                                                                                     "name":  "dedupe_key",
+                                                                                     "type":  "string",
+                                                                                     "value":  "={{ String($json.workflow?.id || \u0027unknown\u0027) + \u0027:\u0027 + String($json.execution?.id || \u0027unknown\u0027) }}"
+                                                                                 }
+                                                                             ]
+                                                         },
+                                         "options":  {
+                                                         "dotNotation":  false
+                                                     }
+                                     },
+                      "id":  "40000000-0000-4000-8000-000000000002",
+                      "name":  "02. Normalize — Incident",
+                      "type":  "n8n-nodes-base.set",
+                      "typeVersion":  3.4,
+                      "position":  [
+                                       240,
+                                       304
+                                   ]
+                  },
+                  {
+                      "parameters":  {
+                                         "operation":  "upsert",
+                                         "dataTableId":  {
+                                                             "__rl":  true,
+                                                             "mode":  "id",
+                                                             "value":  "[ADD YOUR WORKFLOW ERRORS TABLE ID]"
+                                                         },
+                                         "matchType":  "allConditions",
+                                         "filters":  {
+                                                         "conditions":  [
+                                                                            {
+                                                                                "keyName":  "dedupe_key",
+                                                                                "keyValue":  "={{ $json.dedupe_key }}"
+                                                                            }
+                                                                        ]
+                                                     },
+                                         "columns":  {
+                                                         "mappingMode":  "defineBelow",
+                                                         "value":  {
+                                                                       "timestamp":  "={{ $json.timestamp }}",
+                                                                       "workflow_id":  "={{ $json.workflow_id }}",
+                                                                       "workflow_name":  "={{ $json.workflow_name }}",
+                                                                       "execution_id":  "={{ $json.execution_id }}",
+                                                                       "execution_url":  "={{ $json.execution_url }}",
+                                                                       "failed_node":  "={{ $json.failed_node }}",
+                                                                       "error_name":  "={{ $json.error_name }}",
+                                                                       "error_message":  "={{ $json.error_message }}",
+                                                                       "execution_mode":  "={{ $json.execution_mode }}",
+                                                                       "status":  "={{ $json.status }}",
+                                                                       "dedupe_key":  "={{ $json.dedupe_key }}"
+                                                                   },
+                                                         "matchingColumns":  [
+                                                                                 "dedupe_key"
+                                                                             ],
+                                                         "schema":  [
+
+                                                                    ],
+                                                         "attemptToConvertTypes":  true,
+                                                         "convertFieldsToString":  false
+                                                     },
+                                         "options":  {
+
+                                                     }
+                                     },
+                      "id":  "40000000-0000-4000-8000-000000000003",
+                      "name":  "03. Insert — workflow_errors",
+                      "type":  "n8n-nodes-base.dataTable",
+                      "typeVersion":  1.1,
+                      "position":  [
+                                       480,
+                                       304
+                                   ]
+                  },
+                  {
+                      "parameters":  {
+                                         "sendTo":  "[ADD YOUR EMAIL ADDRESS]",
+                                         "subject":  "={{ \u0027[n8n] Workflow failure — \u0027 + $(\u002702. Normalize — Incident\u0027).item.json.workflow_name }}",
+                                         "emailType":  "text",
+                                         "message":  "={{ [ \u0027Workflow: \u0027 + $(\u002702. Normalize — Incident\u0027).item.json.workflow_name + \u0027 (\u0027 + $(\u002702. Normalize — Incident\u0027).item.json.workflow_id + \u0027)\u0027, \u0027Failed node: \u0027 + $(\u002702. Normalize — Incident\u0027).item.json.failed_node, \u0027Error: \u0027 + $(\u002702. Normalize — Incident\u0027).item.json.error_name + \u0027: \u0027 + $(\u002702. Normalize — Incident\u0027).item.json.error_message, \u0027Execution mode: \u0027 + $(\u002702. Normalize — Incident\u0027).item.json.execution_mode, \u0027Execution: \u0027 + $(\u002702. Normalize — Incident\u0027).item.json.execution_url, \u0027Time: \u0027 + $(\u002702. Normalize — Incident\u0027).item.json.timestamp, \u0027Incident key: \u0027 + $(\u002702. Normalize — Incident\u0027).item.json.dedupe_key ].join(\u0027\\n\u0027) }}",
+                                         "options":  {
+
+                                                     }
+                                     },
+                      "id":  "40000000-0000-4000-8000-000000000004",
+                      "name":  "04. Send — Email Alert",
+                      "type":  "n8n-nodes-base.gmail",
+                      "typeVersion":  2.2,
+                      "position":  [
+                                       720,
+                                       304
+                                   ],
+                      "retryOnFail":  true,
+                      "maxTries":  3,
+                      "waitBetweenTries":  5000,
+                      "credentials":  {
+                                          "gmailOAuth2":  {
+                                                              "name":  "Gmail account"
+                                                          }
+                                      },
+                      "onError":  "continueRegularOutput"
+                  },
+                  {
+                      "parameters":  {
+                                         "content":  "\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n  # 04 — Workflow Error Handler (Overview)\n\n  **What it does:** Shared catch-all for unexpected failures in Workflows 01, 02, and 03 (assigned as their error workflow). Captures the failed execution, stores one sanitized incident\n  row in the `workflow_errors` Data Table, and sends a best-effort Gmail alert to the owner. It handles only unexpected failures — expected business outcomes (no topics, disapprovals,\n  rejected callbacks) stay inside the calling workflows.\n\n  **Important process:**\n  `01. Trigger — Workflow Error` (Error Trigger) → `02. Normalize — Incident` (whitelisted fields only) → `03. Insert — workflow_errors` (upsert by `dedupe_key`) → `04. Send — Email Alert`\n  (Gmail)\n\n  **Output:**\n  - One `workflow_errors` row per incident (dedupe key = `workflow_id:execution_id`): `timestamp`, `workflow_id`, `workflow_name`, `execution_id`, `execution_url`, `failed_node`,\n  `error_name`, `error_message`, `execution_mode`, `status` (`open`), `dedupe_key`.\n  - `error_message` is a fixed sanitized string (\"Unhandled workflow error. Open the linked execution for details.\") — no credentials, tokens, payloads, or stack traces are stored or\n  emailed.\n  - Gmail alert to `[ADD YOUR EMAIL ADDRESS]` with workflow name/ID, failed node, error name, execution mode, execution link, timestamp, and incident key.\n\n  **Error handling:**\n  - Data Table write happens before the email, so a failed email can never erase the stored incident.\n  - Gmail is best-effort: 3 attempts with 5s waits and `continueRegularOutput`, so alerting failure does not turn into another error.\n  - Gmail is a different channel than the Telegram-based workflows, avoiding recursive notification loops.\n  - Reruns of the same failed execution update the existing row instead of creating duplicates.",
+                                         "height":  816,
+                                         "width":  1424,
+                                         "color":  "#070D12"
+                                     },
+                      "type":  "n8n-nodes-base.stickyNote",
+                      "typeVersion":  1,
+                      "position":  [
+                                       -272,
+                                       160
+                                   ],
+                      "id":  "a9bb9d6c-7cf2-4388-a509-0d95429022bd",
+                      "name":  "Sticky Note1"
+                  }
+              ],
+    "connections":  {
+                        "01. Trigger — Workflow Error":  {
+                                                             "main":  [
+                                                                          [
+                                                                              {
+                                                                                  "node":  "02. Normalize — Incident",
+                                                                                  "type":  "main",
+                                                                                  "index":  0
+                                                                              }
+                                                                          ]
+                                                                      ]
+                                                         },
+                        "02. Normalize — Incident":  {
+                                                         "main":  [
+                                                                      [
+                                                                          {
+                                                                              "node":  "03. Insert — workflow_errors",
+                                                                              "type":  "main",
+                                                                              "index":  0
+                                                                          }
+                                                                      ]
+                                                                  ]
+                                                     },
+                        "03. Insert — workflow_errors":  {
+                                                             "main":  [
+                                                                          [
+                                                                              {
+                                                                                  "node":  "04. Send — Email Alert",
+                                                                                  "type":  "main",
+                                                                                  "index":  0
+                                                                              }
+                                                                          ]
+                                                                      ]
+                                                         }
+                    },
+    "settings":  {
+                     "executionOrder":  "v1",
+                     "timezone":  "Asia/Manila",
+                     "saveDataErrorExecution":  "all",
+                     "saveDataSuccessExecution":  "all",
+                     "saveManualExecutions":  true,
+                     "saveExecutionProgress":  true,
+                     "executionTimeout":  120,
+                     "binaryMode":  "separate"
+                 },
+    "staticData":  null,
+    "pinData":  {
+
+                },
+    "meta":  null,
+    "nodeGroups":  [
+
+                   ]
+}

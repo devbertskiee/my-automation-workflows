@@ -1,0 +1,1063 @@
+{
+    "id":  "[ADD YOUR WORKFLOW ID]",
+    "name":  "01 - Daily Topic Discovery",
+    "nodes":  [
+                  {
+                      "parameters":  {
+                                         "rule":  {
+                                                      "interval":  [
+                                                                       {
+                                                                           "triggerAtHour":  9
+                                                                       }
+                                                                   ]
+                                                  }
+                                     },
+                      "id":  "10000000-0000-4000-8000-000000000003",
+                      "name":  "01. Trigger — Daily 9 AM",
+                      "type":  "n8n-nodes-base.scheduleTrigger",
+                      "typeVersion":  1.3,
+                      "position":  [
+                                       -80,
+                                       -640
+                                   ]
+                  },
+                  {
+                      "parameters":  {
+                                         "jsCode":  "const now = DateTime.now().setZone(\u0027Asia/Manila\u0027);\n\nconst queries = [\n  \u0027(OpenAI OR Anthropic OR Gemini OR DeepMind OR \"Meta AI\" OR Microsoft OR xAI OR Mistral OR DeepSeek) \u0027 +\n    \u0027(launch OR release OR update OR benchmark) when:1d\u0027,\n  \u0027(\"AI agent\" OR \"agentic AI\" OR \"AI assistant\" OR \"AI automation\" OR \"AI coding\") \u0027 +\n    \u0027(launch OR release OR integration OR rollout) when:1d\u0027,\n  \u0027(\"AI research\" OR \"AI breakthrough\" OR \"open-weight model\" OR \"AI benchmark\") \u0027 +\n    \u0027(published OR released OR solves OR outperforms) when:1d\u0027,\n  \u0027(\"enterprise AI\" OR \"AI regulation\" OR \"AI safety\" OR \"AI security\" OR \"AI chips\") \u0027 +\n    \u0027(adoption OR deployment OR law OR ruling OR breach OR investment) when:1d\u0027,\n];\n\nreturn queries.map((query, index) =\u003e ({\n  json: {\n    discovery_date: now.toFormat(\u0027yyyy-LL-dd\u0027),\n    fetched_at: now.toISO(),\n    query,\n    query_index: index + 1,\n  },\n}));"
+                                     },
+                      "id":  "521a39da-931e-44b5-b34f-e5cb4302b98f",
+                      "name":  "02. Build — SerpAPI Queries",
+                      "type":  "n8n-nodes-base.code",
+                      "typeVersion":  2,
+                      "position":  [
+                                       144,
+                                       -640
+                                   ]
+                  },
+                  {
+                      "parameters":  {
+                                         "url":  "https://serpapi.com/search.json",
+                                         "authentication":  "predefinedCredentialType",
+                                         "nodeCredentialType":  "serpApi",
+                                         "sendQuery":  true,
+                                         "queryParameters":  {
+                                                                 "parameters":  [
+                                                                                    {
+                                                                                        "name":  "engine",
+                                                                                        "value":  "google_news"
+                                                                                    },
+                                                                                    {
+                                                                                        "name":  "q",
+                                                                                        "value":  "={{ $json.query }}"
+                                                                                    },
+                                                                                    {
+                                                                                        "name":  "gl",
+                                                                                        "value":  "us"
+                                                                                    },
+                                                                                    {
+                                                                                        "name":  "hl",
+                                                                                        "value":  "en"
+                                                                                    },
+                                                                                    {
+                                                                                        "name":  "no_cache",
+                                                                                        "value":  "false"
+                                                                                    },
+                                                                                    {
+                                                                                        "name":  "output",
+                                                                                        "value":  "json"
+                                                                                    }
+                                                                                ]
+                                                             },
+                                         "sendHeaders":  true,
+                                         "headerParameters":  {
+                                                                  "parameters":  [
+                                                                                     {
+                                                                                         "name":  "Accept",
+                                                                                         "value":  "application/json"
+                                                                                     }
+                                                                                 ]
+                                                              },
+                                         "options":  {
+                                                         "allowUnauthorizedCerts":  false,
+                                                         "redirect":  {
+                                                                          "redirect":  {
+                                                                                           "maxRedirects":  5
+                                                                                       }
+                                                                      },
+                                                         "response":  {
+                                                                          "response":  {
+                                                                                           "responseFormat":  "json"
+                                                                                       }
+                                                                      },
+                                                         "timeout":  60000,
+                                                         "sendCredentialsOnCrossOriginRedirect":  false
+                                                     }
+                                     },
+                      "id":  "9c86ef5b-fe93-47c4-8a89-e0b31899cbb3",
+                      "name":  "03. Fetch — Google News via SerpAPI",
+                      "type":  "n8n-nodes-base.httpRequest",
+                      "typeVersion":  4.4,
+                      "position":  [
+                                       368,
+                                       -640
+                                   ],
+                      "retryOnFail":  true,
+                      "maxTries":  3,
+                      "waitBetweenTries":  5000,
+                      "credentials":  {
+                                          "serpApi":  {
+                                                          "name":  "Social Pipeline - SerpAPI"
+                                                      }
+                                      },
+                      "onError":  "continueRegularOutput"
+                  },
+                  {
+                      "parameters":  {
+                                         "jsCode":  "const inputItems = $input.all();\nconst queryItems = $(\u002702. Build — SerpAPI Queries\u0027).all();\n\nfunction pairedIndex(item, fallback) {\n  const paired = item.pairedItem;\n\n  if (Array.isArray(paired)) {\n    return Number(paired[0]?.item ?? fallback);\n  }\n\n  if (paired \u0026\u0026 typeof paired === \u0027object\u0027) {\n    return Number(paired.item ?? fallback);\n  }\n\n  return fallback;\n}\n\nfunction normalizeTitle(value) {\n  return String(value || \u0027\u0027)\n    .normalize(\u0027NFKC\u0027)\n    .trim()\n    .replace(/\\s+/g, \u0027 \u0027)\n    .toLowerCase();\n}\n\nfunction normalizeUrl(value) {\n  const raw = String(value || \u0027\u0027).trim();\n\n  if (!raw) {\n    return \u0027\u0027;\n  }\n\n  try {\n    const url = new URL(raw);\n\n    url.hash = \u0027\u0027;\n    url.hostname = url.hostname.toLowerCase();\n\n    const usesDefaultHttpsPort =\n      url.protocol === \u0027https:\u0027 \u0026\u0026 url.port === \u0027443\u0027;\n    const usesDefaultHttpPort =\n      url.protocol === \u0027http:\u0027 \u0026\u0026 url.port === \u002780\u0027;\n\n    if (usesDefaultHttpsPort || usesDefaultHttpPort) {\n      url.port = \u0027\u0027;\n    }\n\n    const trackingKeys = new Set([\n      \u0027gclid\u0027,\n      \u0027fbclid\u0027,\n      \u0027dclid\u0027,\n      \u0027mc_cid\u0027,\n      \u0027mc_eid\u0027,\n    ]);\n\n    for (const key of [...url.searchParams.keys()]) {\n      const lowerKey = key.toLowerCase();\n\n      if (lowerKey.startsWith(\u0027utm_\u0027) || trackingKeys.has(lowerKey)) {\n        url.searchParams.delete(key);\n      }\n    }\n\n    url.searchParams.sort();\n\n    if (url.pathname.length \u003e 1) {\n      url.pathname = url.pathname.replace(/\\/+$/, \u0027\u0027);\n    }\n\n    return url.toString();\n  } catch {\n    return raw.replace(/#.*$/, \u0027\u0027).replace(/\\/+$/, \u0027\u0027);\n  }\n}\n\nfunction sourceName(source) {\n  if (typeof source === \u0027string\u0027) {\n    return source.trim();\n  }\n\n  return String(source?.name || source?.title || \u0027Unknown source\u0027).trim();\n}\n\nfunction publicationValue(result) {\n  return String(\n    result.iso_date ||\n      result.published_at ||\n      result.published ||\n      result.date ||\n      \u0027\u0027,\n  ).trim();\n}\n\nfunction publicationMillis(value) {\n  const parsed = Date.parse(value);\n\n  return Number.isFinite(parsed) ? parsed : 0;\n}\n\nfunction flattenNews(results, query, queryIndex) {\n  const flattened = [];\n\n  const walk = (entries, inheritedPosition) =\u003e {\n    if (!Array.isArray(entries)) {\n      return;\n    }\n\n    entries.forEach((entry, index) =\u003e {\n      if (!entry || typeof entry !== \u0027object\u0027) {\n        return;\n      }\n\n      const position = Number(\n        entry.position ?? inheritedPosition ?? index + 1,\n      );\n      const title = String(entry.title || \u0027\u0027).trim();\n      const url = String(entry.link || entry.url || \u0027\u0027).trim();\n\n      if (title || url) {\n        const publishedAt = publicationValue(entry);\n\n        flattened.push({\n          position: Number.isFinite(position)\n            ? position\n            : Number.MAX_SAFE_INTEGER,\n          query_index: queryIndex,\n          query,\n          title,\n          source: sourceName(entry.source),\n          url,\n          published_at: publishedAt,\n          published_ms: publicationMillis(publishedAt),\n        });\n      }\n\n      if (Array.isArray(entry.stories)) {\n        walk(entry.stories, position);\n      }\n    });\n  };\n\n  walk(results, undefined);\n\n  return flattened;\n}\n\nlet successfulQueries = 0;\nlet failedQueries = 0;\nlet candidates = [];\n\ninputItems.forEach((item, index) =\u003e {\n  const data = item.json || {};\n  const pairedItemIndex = pairedIndex(item, index);\n  const fallbackQuery =\n    queryItems[pairedItemIndex]?.json?.query ||\n    queryItems[index]?.json?.query ||\n    \u0027\u0027;\n  const query = String(data.search_parameters?.q || fallbackQuery);\n  const queryIndex = Number(\n    queryItems.find((queryItem) =\u003e queryItem.json.query === query)?.json\n      ?.query_index ||\n      queryItems[pairedItemIndex]?.json?.query_index ||\n      index + 1,\n  );\n  const status = String(data.search_metadata?.status || \u0027\u0027).toLowerCase();\n  const failed =\n    Boolean(data.error) || status === \u0027error\u0027 || status === \u0027failed\u0027;\n\n  if (failed) {\n    failedQueries += 1;\n    return;\n  }\n\n  successfulQueries += 1;\n  candidates = candidates.concat(\n    flattenNews(data.news_results, query, queryIndex),\n  );\n});\n\nconst configuredQueries = queryItems.length || 4;\n\nfailedQueries += Math.max(\n  0,\n  configuredQueries - successfulQueries - failedQueries,\n);\n\ncandidates.sort(\n  (first, second) =\u003e\n    first.position - second.position ||\n    first.query_index - second.query_index ||\n    second.published_ms - first.published_ms ||\n    normalizeTitle(first.title).localeCompare(\n      normalizeTitle(second.title),\n    ),\n);\n\nconst seen = new Set();\nconst unique = [];\n\nfor (const candidate of candidates) {\n  const normalizedUrl = normalizeUrl(candidate.url);\n  const normalizedTitle = normalizeTitle(candidate.title);\n  const dedupeKey = normalizedUrl\n    ? \u0027url:\u0027 + normalizedUrl\n    : \u0027title:\u0027 + normalizedTitle;\n\n  if (!normalizedTitle \u0026\u0026 !normalizedUrl) {\n    continue;\n  }\n\n  if (seen.has(dedupeKey)) {\n    continue;\n  }\n\n  seen.add(dedupeKey);\n  unique.push({\n    ...candidate,\n    normalized_url: normalizedUrl,\n    normalized_title: normalizedTitle,\n  });\n}\n\nconst manilaNow = DateTime.now().setZone(\u0027Asia/Manila\u0027);\nconst discoveryDate = String(\n  queryItems[0]?.json?.discovery_date ||\n    manilaNow.toFormat(\u0027yyyy-LL-dd\u0027),\n);\nconst fetchedAt = String(\n  queryItems[0]?.json?.fetched_at || manilaNow.toISO(),\n);\nconst results = unique.slice(0, 5).map((result, index) =\u003e ({\n  result_id:\n    discoveryDate +\n    \u0027|\u0027 +\n    (result.normalized_url || \u0027title:\u0027 + result.normalized_title),\n  discovery_date: discoveryDate,\n  fetched_at: fetchedAt,\n  rank: index + 1,\n  title: result.title || \u0027(Untitled)\u0027,\n  source: result.source,\n  url: result.normalized_url || result.url,\n  published_at: result.published_at,\n  query: result.query,\n}));\n\nreturn [\n  {\n    json: {\n      discovery_date: discoveryDate,\n      fetched_at: fetchedAt,\n      successful_query_count: successfulQueries,\n      failed_query_count: failedQueries,\n      complete_failure: successfulQueries === 0,\n      has_results: results.length \u003e 0,\n      result_count: results.length,\n      results,\n      alert_source: successfulQueries === 0 ? \u0027SerpAPI\u0027 : \u0027\u0027,\n      alert_message:\n        successfulQueries === 0\n          ? \u0027All four Google News queries failed after three attempts.\u0027\n          : \u0027\u0027,\n    },\n  },\n];"
+                                     },
+                      "id":  "9ad77861-7787-46fc-90c6-5fb0cf2eb86a",
+                      "name":  "04. Select — Top 5 Unique News",
+                      "type":  "n8n-nodes-base.code",
+                      "typeVersion":  2,
+                      "position":  [
+                                       592,
+                                       -640
+                                   ]
+                  },
+                  {
+                      "parameters":  {
+                                         "conditions":  {
+                                                            "options":  {
+                                                                            "caseSensitive":  true,
+                                                                            "leftValue":  "",
+                                                                            "typeValidation":  "strict",
+                                                                            "version":  2
+                                                                        },
+                                                            "combinator":  "and",
+                                                            "conditions":  [
+                                                                               {
+                                                                                   "id":  "c9373719-8fac-489e-9fd3-30d7dbf7781c",
+                                                                                   "operator":  {
+                                                                                                    "type":  "boolean",
+                                                                                                    "operation":  "true",
+                                                                                                    "singleValue":  true
+                                                                                                },
+                                                                                   "leftValue":  "={{ $json.complete_failure }}",
+                                                                                   "rightValue":  ""
+                                                                               }
+                                                                           ]
+                                                        },
+                                         "options":  {
+
+                                                     }
+                                     },
+                      "id":  "97ad263d-f79b-4f10-bf98-b8680eaf8429",
+                      "name":  "05. Route — Complete SerpAPI Failure",
+                      "type":  "n8n-nodes-base.if",
+                      "typeVersion":  2.3,
+                      "position":  [
+                                       816,
+                                       -640
+                                   ]
+                  },
+                  {
+                      "parameters":  {
+                                         "conditions":  {
+                                                            "options":  {
+                                                                            "caseSensitive":  true,
+                                                                            "leftValue":  "",
+                                                                            "typeValidation":  "strict",
+                                                                            "version":  2
+                                                                        },
+                                                            "combinator":  "and",
+                                                            "conditions":  [
+                                                                               {
+                                                                                   "id":  "c64c7a01-4683-4c27-a255-f42a418c6dbf",
+                                                                                   "operator":  {
+                                                                                                    "type":  "boolean",
+                                                                                                    "operation":  "true",
+                                                                                                    "singleValue":  true
+                                                                                                },
+                                                                                   "leftValue":  "={{ $json.has_results }}",
+                                                                                   "rightValue":  ""
+                                                                               }
+                                                                           ]
+                                                        },
+                                         "options":  {
+
+                                                     }
+                                     },
+                      "id":  "6580f31f-b4bb-4f0c-a11d-7bfc6001e2ef",
+                      "name":  "06. Route — Results Available",
+                      "type":  "n8n-nodes-base.if",
+                      "typeVersion":  2.3,
+                      "position":  [
+                                       -96,
+                                       32
+                                   ]
+                  },
+                  {
+                      "parameters":  {
+                                         "jsCode":  "const summary = $input.first().json;\nconst results = Array.isArray(summary.results) ? summary.results : [];\n\nreturn results.map((result, index) =\u003e ({\n  json: {\n    ...result,\n    rank: index + 1,\n  },\n  pairedItem: {\n    item: 0,\n  },\n}));"
+                                     },
+                      "id":  "78fc0972-65cd-426e-bc74-03347865d2dd",
+                      "name":  "07. Prepare — Daily News Rows",
+                      "type":  "n8n-nodes-base.code",
+                      "typeVersion":  2,
+                      "position":  [
+                                       128,
+                                       32
+                                   ]
+                  },
+                  {
+                      "parameters":  {
+                                         "operation":  "appendOrUpdate",
+                                         "documentId":  {
+                                                            "__rl":  true,
+                                                            "value":  "[ADD YOUR SPREADSHEET ID]",
+                                                            "mode":  "id",
+                                                            "cachedResultName":  "Tech AI Social Pipeline"
+                                                        },
+                                         "sheetName":  {
+                                                           "__rl":  true,
+                                                           "value":  "Daily News",
+                                                           "mode":  "name",
+                                                           "cachedResultName":  "Daily News"
+                                                       },
+                                         "columns":  {
+                                                         "mappingMode":  "defineBelow",
+                                                         "value":  {
+                                                                       "result_id":  "={{ $json.result_id }}",
+                                                                       "discovery_date":  "={{ $json.discovery_date }}",
+                                                                       "fetched_at":  "={{ $json.fetched_at }}",
+                                                                       "rank":  "={{ $json.rank }}",
+                                                                       "title":  "={{ $json.title }}",
+                                                                       "source":  "={{ $json.source }}",
+                                                                       "url":  "={{ $json.url }}",
+                                                                       "published_at":  "={{ $json.published_at }}",
+                                                                       "query":  "={{ $json.query }}"
+                                                                   },
+                                                         "matchingColumns":  [
+                                                                                 "result_id"
+                                                                             ],
+                                                         "schema":  [
+                                                                        {
+                                                                            "id":  "result_id",
+                                                                            "displayName":  "result_id",
+                                                                            "required":  false,
+                                                                            "defaultMatch":  true,
+                                                                            "display":  true,
+                                                                            "type":  "string",
+                                                                            "canBeUsedToMatch":  true,
+                                                                            "removed":  false
+                                                                        },
+                                                                        {
+                                                                            "id":  "discovery_date",
+                                                                            "displayName":  "discovery_date",
+                                                                            "required":  false,
+                                                                            "defaultMatch":  false,
+                                                                            "display":  true,
+                                                                            "type":  "string",
+                                                                            "canBeUsedToMatch":  true,
+                                                                            "removed":  false
+                                                                        },
+                                                                        {
+                                                                            "id":  "fetched_at",
+                                                                            "displayName":  "fetched_at",
+                                                                            "required":  false,
+                                                                            "defaultMatch":  false,
+                                                                            "display":  true,
+                                                                            "type":  "string",
+                                                                            "canBeUsedToMatch":  true,
+                                                                            "removed":  false
+                                                                        },
+                                                                        {
+                                                                            "id":  "rank",
+                                                                            "displayName":  "rank",
+                                                                            "required":  false,
+                                                                            "defaultMatch":  false,
+                                                                            "display":  true,
+                                                                            "type":  "number",
+                                                                            "canBeUsedToMatch":  true,
+                                                                            "removed":  false
+                                                                        },
+                                                                        {
+                                                                            "id":  "title",
+                                                                            "displayName":  "title",
+                                                                            "required":  false,
+                                                                            "defaultMatch":  false,
+                                                                            "display":  true,
+                                                                            "type":  "string",
+                                                                            "canBeUsedToMatch":  true,
+                                                                            "removed":  false
+                                                                        },
+                                                                        {
+                                                                            "id":  "source",
+                                                                            "displayName":  "source",
+                                                                            "required":  false,
+                                                                            "defaultMatch":  false,
+                                                                            "display":  true,
+                                                                            "type":  "string",
+                                                                            "canBeUsedToMatch":  true,
+                                                                            "removed":  false
+                                                                        },
+                                                                        {
+                                                                            "id":  "url",
+                                                                            "displayName":  "url",
+                                                                            "required":  false,
+                                                                            "defaultMatch":  false,
+                                                                            "display":  true,
+                                                                            "type":  "string",
+                                                                            "canBeUsedToMatch":  true,
+                                                                            "removed":  false
+                                                                        },
+                                                                        {
+                                                                            "id":  "published_at",
+                                                                            "displayName":  "published_at",
+                                                                            "required":  false,
+                                                                            "defaultMatch":  false,
+                                                                            "display":  true,
+                                                                            "type":  "string",
+                                                                            "canBeUsedToMatch":  true,
+                                                                            "removed":  false
+                                                                        },
+                                                                        {
+                                                                            "id":  "query",
+                                                                            "displayName":  "query",
+                                                                            "required":  false,
+                                                                            "defaultMatch":  false,
+                                                                            "display":  true,
+                                                                            "type":  "string",
+                                                                            "canBeUsedToMatch":  true,
+                                                                            "removed":  false
+                                                                        }
+                                                                    ],
+                                                         "attemptToConvertTypes":  false,
+                                                         "convertFieldsToString":  false
+                                                     },
+                                         "options":  {
+                                                         "cellFormat":  "RAW",
+                                                         "locationDefine":  {
+                                                                                "values":  {
+
+                                                                                           }
+                                                                            },
+                                                         "useAppend":  false
+                                                     }
+                                     },
+                      "id":  "c75d2d10-5910-4358-a4cb-f0d7c4800946",
+                      "name":  "08. Write — Daily News",
+                      "type":  "n8n-nodes-base.googleSheets",
+                      "typeVersion":  4.7,
+                      "position":  [
+                                       352,
+                                       32
+                                   ],
+                      "retryOnFail":  true,
+                      "maxTries":  3,
+                      "waitBetweenTries":  5000,
+                      "alwaysOutputData":  true,
+                      "credentials":  {
+                                          "googleSheetsOAuth2Api":  {
+                                                                        "name":  "AP - Sheet Credential"
+                                                                    }
+                                      }
+                  },
+                  {
+                      "parameters":  {
+                                         "jsCode":  "const summary = $(\u002704. Select — Top 5 Unique News\u0027).first().json;\nconst results = Array.isArray(summary.results) ? summary.results : [];\n\nconst escapeHtml = (value) =\u003e\n  String(value || \u0027\u0027)\n    .replace(/\u0026/g, \u0027\u0026amp;\u0027)\n    .replace(/\u003c/g, \u0027\u0026lt;\u0027)\n    .replace(/\u003e/g, \u0027\u0026gt;\u0027);\n\nconst escapeAttribute = (value) =\u003e\n  escapeHtml(value).replace(/\"/g, \u0027\u0026quot;\u0027);\n\nconst discoveryToken = String(summary.discovery_date || \u0027\u0027)\n  .replace(/\\D/g, \u0027\u0027)\n  .slice(0, 8);\n\nif (!/^\\d{8}$/.test(discoveryToken)) {\n  throw new Error(\n    \u0027Discovery date must resolve to YYYYMMDD for Telegram callback data\u0027,\n  );\n}\n\nconst lines = [\n  \u0027\u003cb\u003eDaily News — \u0027 + escapeHtml(summary.discovery_date) + \u0027\u003c/b\u003e\u0027,\n  \u0027\u0027,\n];\n\nfor (const result of results) {\n  const published =\n    result.published_at || \u0027Publication time unavailable\u0027;\n\n  lines.push(\n    \u0027\u003cb\u003e\u0027 + result.rank + \u0027. \u0027 + escapeHtml(result.title) + \u0027\u003c/b\u003e\u0027,\n    escapeHtml(result.source) + \u0027 · \u0027 + escapeHtml(published),\n    \u0027\u003ca href=\"\u0027 + escapeAttribute(result.url) + \u0027\"\u003eOpen article\u003c/a\u003e\u0027,\n    \u0027\u0027,\n  );\n}\n\nconst telegramKeyboard = {\n  rows: results.map((result, index) =\u003e {\n    const rank = Number(result.rank) || index + 1;\n    const callbackData = \u0027select|\u0027 + discoveryToken + \u0027|\u0027 + rank;\n    const compactTitle = String(result.title || \u0027Untitled topic\u0027)\n      .replace(/\\s+/g, \u0027 \u0027)\n      .trim();\n    const titleCharacters = Array.from(compactTitle);\n    const shortTitle =\n      titleCharacters.length \u003e 36\n        ? titleCharacters.slice(0, 36).join(\u0027\u0027) + \u0027…\u0027\n        : compactTitle;\n\n    if (Buffer.byteLength(callbackData, \u0027utf8\u0027) \u003e 64) {\n      throw new Error(\u0027Telegram callback data exceeds 64 bytes\u0027);\n    }\n\n    return {\n      row: {\n        buttons: [\n          {\n            text: \u0027Select \u0027 + rank + \u0027 — \u0027 + shortTitle,\n            additionalFields: {\n              callback_data: callbackData,\n            },\n          },\n        ],\n      },\n    };\n  }),\n};\n\nreturn [\n  {\n    json: {\n      discovery_date: summary.discovery_date,\n      result_count: results.length,\n      telegram_text: lines.join(\u0027\\n\u0027).trim(),\n      telegram_keyboard: telegramKeyboard,\n    },\n  },\n];"
+                                     },
+                      "id":  "a2d56dcc-2fd4-482a-a80a-7d271bb336d9",
+                      "name":  "09. Format — Telegram Digest",
+                      "type":  "n8n-nodes-base.code",
+                      "typeVersion":  2,
+                      "position":  [
+                                       560,
+                                       32
+                                   ]
+                  },
+                  {
+                      "parameters":  {
+                                         "chatId":  "[ADD YOUR TELEGRAM CHAT ID]",
+                                         "text":  "={{ $json.telegram_text }}",
+                                         "replyMarkup":  "inlineKeyboard",
+                                         "inlineKeyboard":  {
+                                                                "rows":  [
+                                                                             {
+                                                                                 "row":  {
+                                                                                             "buttons":  [
+                                                                                                             {
+                                                                                                                 "text":  "={{ $json.telegram_keyboard.rows[0].row.buttons[0].text }}",
+                                                                                                                 "additionalFields":  {
+                                                                                                                                          "callback_data":  "={{ $json.telegram_keyboard.rows[0].row.buttons[0].additionalFields.callback_data }}"
+                                                                                                                                      }
+                                                                                                             }
+                                                                                                         ]
+                                                                                         }
+                                                                             },
+                                                                             {
+                                                                                 "row":  {
+                                                                                             "buttons":  [
+                                                                                                             {
+                                                                                                                 "text":  "={{ $json.telegram_keyboard.rows[1].row.buttons[0].text }}",
+                                                                                                                 "additionalFields":  {
+                                                                                                                                          "callback_data":  "={{ $json.telegram_keyboard.rows[1].row.buttons[0].additionalFields.callback_data }}"
+                                                                                                                                      }
+                                                                                                             }
+                                                                                                         ]
+                                                                                         }
+                                                                             },
+                                                                             {
+                                                                                 "row":  {
+                                                                                             "buttons":  [
+                                                                                                             {
+                                                                                                                 "text":  "={{ $json.telegram_keyboard.rows[2].row.buttons[0].text }}",
+                                                                                                                 "additionalFields":  {
+                                                                                                                                          "callback_data":  "={{ $json.telegram_keyboard.rows[2].row.buttons[0].additionalFields.callback_data }}"
+                                                                                                                                      }
+                                                                                                             }
+                                                                                                         ]
+                                                                                         }
+                                                                             },
+                                                                             {
+                                                                                 "row":  {
+                                                                                             "buttons":  [
+                                                                                                             {
+                                                                                                                 "text":  "={{ $json.telegram_keyboard.rows[3].row.buttons[0].text }}",
+                                                                                                                 "additionalFields":  {
+                                                                                                                                          "callback_data":  "={{ $json.telegram_keyboard.rows[3].row.buttons[0].additionalFields.callback_data }}"
+                                                                                                                                      }
+                                                                                                             }
+                                                                                                         ]
+                                                                                         }
+                                                                             },
+                                                                             {
+                                                                                 "row":  {
+                                                                                             "buttons":  [
+                                                                                                             {
+                                                                                                                 "text":  "={{ $json.telegram_keyboard.rows[4].row.buttons[0].text }}",
+                                                                                                                 "additionalFields":  {
+                                                                                                                                          "callback_data":  "={{ $json.telegram_keyboard.rows[4].row.buttons[0].additionalFields.callback_data }}"
+                                                                                                                                      }
+                                                                                                             }
+                                                                                                         ]
+                                                                                         }
+                                                                             }
+                                                                         ]
+                                                            },
+                                         "additionalFields":  {
+                                                                  "appendAttribution":  false,
+                                                                  "disable_notification":  false,
+                                                                  "disable_web_page_preview":  true,
+                                                                  "parse_mode":  "HTML"
+                                                              }
+                                     },
+                      "id":  "dbec9b97-fab8-4322-9d7c-eab5dded42de",
+                      "name":  "10. Send — Telegram Digest",
+                      "type":  "n8n-nodes-base.telegram",
+                      "typeVersion":  1.2,
+                      "position":  [
+                                       1296,
+                                       592
+                                   ],
+                      "retryOnFail":  true,
+                      "maxTries":  3,
+                      "waitBetweenTries":  5000,
+                      "credentials":  {
+                                          "telegramApi":  {
+                                                              "name":  "Social Pipeline - Telegram"
+                                                          }
+                                      }
+                  },
+                  {
+                      "parameters":  {
+                                         "chatId":  "[ADD YOUR TELEGRAM CHAT ID]",
+                                         "text":  "={{ \u0027\u003cb\u003eDaily News — \u0027 + $json.discovery_date + \u0027\u003c/b\u003e\\nSerpAPI returned no Google News results today.\u0027 }}",
+                                         "additionalFields":  {
+                                                                  "appendAttribution":  false,
+                                                                  "disable_notification":  false,
+                                                                  "disable_web_page_preview":  true,
+                                                                  "parse_mode":  "HTML"
+                                                              }
+                                     },
+                      "id":  "25e133bc-e377-4c7d-8b86-793c1ac71510",
+                      "name":  "07b. Send — No Results Notice",
+                      "type":  "n8n-nodes-base.telegram",
+                      "typeVersion":  1.2,
+                      "position":  [
+                                       -96,
+                                       368
+                                   ],
+                      "retryOnFail":  true,
+                      "maxTries":  3,
+                      "waitBetweenTries":  5000,
+                      "credentials":  {
+                                          "telegramApi":  {
+                                                              "name":  "Social Pipeline - Telegram"
+                                                          }
+                                      }
+                  },
+                  {
+                      "parameters":  {
+                                         "mode":  "expression",
+                                         "numberOutputs":  5,
+                                         "output":  "={{ Math.max(0, Math.min(4, Number($json.result_count) - 1)) }}"
+                                     },
+                      "id":  "c702244f-5657-45a5-89c3-8a7a6c83e74c",
+                      "name":  "09b. Route — Telegram Button Count",
+                      "type":  "n8n-nodes-base.switch",
+                      "typeVersion":  3.4,
+                      "position":  [
+                                       1072,
+                                       144
+                                   ]
+                  },
+                  {
+                      "parameters":  {
+                                         "chatId":  "[ADD YOUR TELEGRAM CHAT ID]",
+                                         "text":  "={{ $json.telegram_text }}",
+                                         "replyMarkup":  "inlineKeyboard",
+                                         "inlineKeyboard":  {
+                                                                "rows":  [
+                                                                             {
+                                                                                 "row":  {
+                                                                                             "buttons":  [
+                                                                                                             {
+                                                                                                                 "text":  "={{ $json.telegram_keyboard.rows[0].row.buttons[0].text }}",
+                                                                                                                 "additionalFields":  {
+                                                                                                                                          "callback_data":  "={{ $json.telegram_keyboard.rows[0].row.buttons[0].additionalFields.callback_data }}"
+                                                                                                                                      }
+                                                                                                             }
+                                                                                                         ]
+                                                                                         }
+                                                                             }
+                                                                         ]
+                                                            },
+                                         "additionalFields":  {
+                                                                  "appendAttribution":  false,
+                                                                  "disable_notification":  false,
+                                                                  "disable_web_page_preview":  true,
+                                                                  "parse_mode":  "HTML"
+                                                              }
+                                     },
+                      "id":  "d1c9854f-74a5-4a9b-a301-f270ee30bc17",
+                      "name":  "10a. Send — Telegram Digest (1 Topic)",
+                      "type":  "n8n-nodes-base.telegram",
+                      "typeVersion":  1.2,
+                      "position":  [
+                                       1296,
+                                       -176
+                                   ],
+                      "retryOnFail":  true,
+                      "maxTries":  3,
+                      "waitBetweenTries":  5000,
+                      "credentials":  {
+                                          "telegramApi":  {
+                                                              "name":  "Social Pipeline - Telegram"
+                                                          }
+                                      }
+                  },
+                  {
+                      "parameters":  {
+                                         "chatId":  "[ADD YOUR TELEGRAM CHAT ID]",
+                                         "text":  "={{ $json.telegram_text }}",
+                                         "replyMarkup":  "inlineKeyboard",
+                                         "inlineKeyboard":  {
+                                                                "rows":  [
+                                                                             {
+                                                                                 "row":  {
+                                                                                             "buttons":  [
+                                                                                                             {
+                                                                                                                 "text":  "={{ $json.telegram_keyboard.rows[0].row.buttons[0].text }}",
+                                                                                                                 "additionalFields":  {
+                                                                                                                                          "callback_data":  "={{ $json.telegram_keyboard.rows[0].row.buttons[0].additionalFields.callback_data }}"
+                                                                                                                                      }
+                                                                                                             }
+                                                                                                         ]
+                                                                                         }
+                                                                             },
+                                                                             {
+                                                                                 "row":  {
+                                                                                             "buttons":  [
+                                                                                                             {
+                                                                                                                 "text":  "={{ $json.telegram_keyboard.rows[1].row.buttons[0].text }}",
+                                                                                                                 "additionalFields":  {
+                                                                                                                                          "callback_data":  "={{ $json.telegram_keyboard.rows[1].row.buttons[0].additionalFields.callback_data }}"
+                                                                                                                                      }
+                                                                                                             }
+                                                                                                         ]
+                                                                                         }
+                                                                             }
+                                                                         ]
+                                                            },
+                                         "additionalFields":  {
+                                                                  "appendAttribution":  false,
+                                                                  "disable_notification":  false,
+                                                                  "disable_web_page_preview":  true,
+                                                                  "parse_mode":  "HTML"
+                                                              }
+                                     },
+                      "id":  "ad32b08c-f11d-42f6-835c-a289c42e719e",
+                      "name":  "10b. Send — Telegram Digest (2 Topics)",
+                      "type":  "n8n-nodes-base.telegram",
+                      "typeVersion":  1.2,
+                      "position":  [
+                                       1296,
+                                       16
+                                   ],
+                      "retryOnFail":  true,
+                      "maxTries":  3,
+                      "waitBetweenTries":  5000,
+                      "credentials":  {
+                                          "telegramApi":  {
+                                                              "name":  "Social Pipeline - Telegram"
+                                                          }
+                                      }
+                  },
+                  {
+                      "parameters":  {
+                                         "chatId":  "[ADD YOUR TELEGRAM CHAT ID]",
+                                         "text":  "={{ $json.telegram_text }}",
+                                         "replyMarkup":  "inlineKeyboard",
+                                         "inlineKeyboard":  {
+                                                                "rows":  [
+                                                                             {
+                                                                                 "row":  {
+                                                                                             "buttons":  [
+                                                                                                             {
+                                                                                                                 "text":  "={{ $json.telegram_keyboard.rows[0].row.buttons[0].text }}",
+                                                                                                                 "additionalFields":  {
+                                                                                                                                          "callback_data":  "={{ $json.telegram_keyboard.rows[0].row.buttons[0].additionalFields.callback_data }}"
+                                                                                                                                      }
+                                                                                                             }
+                                                                                                         ]
+                                                                                         }
+                                                                             },
+                                                                             {
+                                                                                 "row":  {
+                                                                                             "buttons":  [
+                                                                                                             {
+                                                                                                                 "text":  "={{ $json.telegram_keyboard.rows[1].row.buttons[0].text }}",
+                                                                                                                 "additionalFields":  {
+                                                                                                                                          "callback_data":  "={{ $json.telegram_keyboard.rows[1].row.buttons[0].additionalFields.callback_data }}"
+                                                                                                                                      }
+                                                                                                             }
+                                                                                                         ]
+                                                                                         }
+                                                                             },
+                                                                             {
+                                                                                 "row":  {
+                                                                                             "buttons":  [
+                                                                                                             {
+                                                                                                                 "text":  "={{ $json.telegram_keyboard.rows[2].row.buttons[0].text }}",
+                                                                                                                 "additionalFields":  {
+                                                                                                                                          "callback_data":  "={{ $json.telegram_keyboard.rows[2].row.buttons[0].additionalFields.callback_data }}"
+                                                                                                                                      }
+                                                                                                             }
+                                                                                                         ]
+                                                                                         }
+                                                                             }
+                                                                         ]
+                                                            },
+                                         "additionalFields":  {
+                                                                  "appendAttribution":  false,
+                                                                  "disable_notification":  false,
+                                                                  "disable_web_page_preview":  true,
+                                                                  "parse_mode":  "HTML"
+                                                              }
+                                     },
+                      "id":  "9947636c-69cf-476d-b748-b5860584da99",
+                      "name":  "10c. Send — Telegram Digest (3 Topics)",
+                      "type":  "n8n-nodes-base.telegram",
+                      "typeVersion":  1.2,
+                      "position":  [
+                                       1296,
+                                       208
+                                   ],
+                      "retryOnFail":  true,
+                      "maxTries":  3,
+                      "waitBetweenTries":  5000,
+                      "credentials":  {
+                                          "telegramApi":  {
+                                                              "name":  "Social Pipeline - Telegram"
+                                                          }
+                                      }
+                  },
+                  {
+                      "parameters":  {
+                                         "chatId":  "[ADD YOUR TELEGRAM CHAT ID]",
+                                         "text":  "={{ $json.telegram_text }}",
+                                         "replyMarkup":  "inlineKeyboard",
+                                         "inlineKeyboard":  {
+                                                                "rows":  [
+                                                                             {
+                                                                                 "row":  {
+                                                                                             "buttons":  [
+                                                                                                             {
+                                                                                                                 "text":  "={{ $json.telegram_keyboard.rows[0].row.buttons[0].text }}",
+                                                                                                                 "additionalFields":  {
+                                                                                                                                          "callback_data":  "={{ $json.telegram_keyboard.rows[0].row.buttons[0].additionalFields.callback_data }}"
+                                                                                                                                      }
+                                                                                                             }
+                                                                                                         ]
+                                                                                         }
+                                                                             },
+                                                                             {
+                                                                                 "row":  {
+                                                                                             "buttons":  [
+                                                                                                             {
+                                                                                                                 "text":  "={{ $json.telegram_keyboard.rows[1].row.buttons[0].text }}",
+                                                                                                                 "additionalFields":  {
+                                                                                                                                          "callback_data":  "={{ $json.telegram_keyboard.rows[1].row.buttons[0].additionalFields.callback_data }}"
+                                                                                                                                      }
+                                                                                                             }
+                                                                                                         ]
+                                                                                         }
+                                                                             },
+                                                                             {
+                                                                                 "row":  {
+                                                                                             "buttons":  [
+                                                                                                             {
+                                                                                                                 "text":  "={{ $json.telegram_keyboard.rows[2].row.buttons[0].text }}",
+                                                                                                                 "additionalFields":  {
+                                                                                                                                          "callback_data":  "={{ $json.telegram_keyboard.rows[2].row.buttons[0].additionalFields.callback_data }}"
+                                                                                                                                      }
+                                                                                                             }
+                                                                                                         ]
+                                                                                         }
+                                                                             },
+                                                                             {
+                                                                                 "row":  {
+                                                                                             "buttons":  [
+                                                                                                             {
+                                                                                                                 "text":  "={{ $json.telegram_keyboard.rows[3].row.buttons[0].text }}",
+                                                                                                                 "additionalFields":  {
+                                                                                                                                          "callback_data":  "={{ $json.telegram_keyboard.rows[3].row.buttons[0].additionalFields.callback_data }}"
+                                                                                                                                      }
+                                                                                                             }
+                                                                                                         ]
+                                                                                         }
+                                                                             }
+                                                                         ]
+                                                            },
+                                         "additionalFields":  {
+                                                                  "appendAttribution":  false,
+                                                                  "disable_notification":  false,
+                                                                  "disable_web_page_preview":  true,
+                                                                  "parse_mode":  "HTML"
+                                                              }
+                                     },
+                      "id":  "1f55b7c7-260a-4daa-a919-6266799ae651",
+                      "name":  "10d. Send — Telegram Digest (4 Topics)",
+                      "type":  "n8n-nodes-base.telegram",
+                      "typeVersion":  1.2,
+                      "position":  [
+                                       1296,
+                                       400
+                                   ],
+                      "retryOnFail":  true,
+                      "maxTries":  3,
+                      "waitBetweenTries":  5000,
+                      "credentials":  {
+                                          "telegramApi":  {
+                                                              "name":  "Social Pipeline - Telegram"
+                                                          }
+                                      }
+                  },
+                  {
+                      "parameters":  {
+                                         "chatId":  "[ADD YOUR TELEGRAM CHAT ID]",
+                                         "text":  "\u003cb\u003eDaily discovery unavailable\u003c/b\u003e\nAll four Google News searches failed after three attempts. Please try again later.",
+                                         "additionalFields":  {
+                                                                  "appendAttribution":  false,
+                                                                  "disable_notification":  false,
+                                                                  "disable_web_page_preview":  true,
+                                                                  "parse_mode":  "HTML"
+                                                              }
+                                     },
+                      "id":  "2e38d459-baf7-4d0f-8ca4-93dc1e7fbe21",
+                      "name":  "05a. Send — Discovery Unavailable",
+                      "type":  "n8n-nodes-base.telegram",
+                      "typeVersion":  1.2,
+                      "position":  [
+                                       1184,
+                                       -656
+                                   ],
+                      "retryOnFail":  true,
+                      "maxTries":  3,
+                      "waitBetweenTries":  5000,
+                      "credentials":  {
+                                          "telegramApi":  {
+                                                              "name":  "Social Pipeline - Telegram"
+                                                          }
+                                      }
+                  },
+                  {
+                      "parameters":  {
+                                         "errorMessage":  "Daily news discovery failed because all SerpAPI queries were unsuccessful."
+                                     },
+                      "id":  "91efc87c-291a-4c8a-a6cc-4e5d55b79a53",
+                      "name":  "05b. Stop — Discovery Failure",
+                      "type":  "n8n-nodes-base.stopAndError",
+                      "typeVersion":  1,
+                      "position":  [
+                                       1408,
+                                       -656
+                                   ]
+                  },
+                  {
+                      "parameters":  {
+                                         "content":  "",
+                                         "height":  512,
+                                         "width":  1984,
+                                         "color":  2
+                                     },
+                      "type":  "n8n-nodes-base.stickyNote",
+                      "typeVersion":  1,
+                      "position":  [
+                                       -272,
+                                       -816
+                                   ],
+                      "id":  "674e2e76-2fe7-4357-915b-dcfd18f8ffd9",
+                      "name":  "Sticky Note"
+                  },
+                  {
+                      "parameters":  {
+                                         "content":  "",
+                                         "height":  1088,
+                                         "width":  624,
+                                         "color":  2
+                                     },
+                      "type":  "n8n-nodes-base.stickyNote",
+                      "typeVersion":  1,
+                      "position":  [
+                                       976,
+                                       -272
+                                   ],
+                      "id":  "66a0863f-3d5e-4f08-8fbf-910bafedc30d",
+                      "name":  "Sticky Note2"
+                  },
+                  {
+                      "parameters":  {
+                                         "content":  "",
+                                         "height":  832,
+                                         "width":  1072,
+                                         "color":  "#070D12"
+                                     },
+                      "type":  "n8n-nodes-base.stickyNote",
+                      "typeVersion":  1,
+                      "position":  [
+                                       -272,
+                                       -192
+                                   ],
+                      "id":  "322d5e1a-4adf-45e4-a399-168b74b0f034",
+                      "name":  "Sticky Note3"
+                  },
+                  {
+                      "parameters":  {
+                                         "content":  " # 01 — Daily Topic Discovery (Overview)\n\n  **What it does:** Runs daily at 9:00 AM (Asia/Manila). Deterministically finds up to 5 unique Tech/AI Google News stories, upserts them into the `Daily News` sheet, and sends one\n  Telegram digest with selection buttons. No AI models used. Callback selection is processed by Workflow 02, not here.\n\n  **Important process:**\n  `01. Trigger — Daily 9 AM` → `02. Build — SerpAPI Queries` (4 queries, each with `when:1d`) → `03. Fetch — Google News via SerpAPI` (per query; 3 attempts, 5s wait, partial-failure\n  tolerant) → `04. Select — Top 5 Unique News` (normalize titles/URLs, exact dedupe by URL then title, deterministic sort, max 5) → `07. Prepare — Daily News Rows` → `08. Write — Daily\n  News` (upsert by `result_id`) → `09. Format — Telegram Digest` → `09b. Route — Telegram Button Count` → `10/10a–10d. Send — Telegram Digest` (1–5 topic variants).\n\n  Zero unique results → `07b. Send — No Results Notice` (skips the sheet write).\n\n  **Output:**\n  - Google Sheets `Daily News` — `result_id`, `discovery_date`, `fetched_at`, `rank`, `title`, `source`, `url`, `published_at`, `query` (append-or-update on `result_id`).\n  - Telegram — one HTML digest with rank, title, source, publication time, and link, plus one `Select N — {title}` button per topic (callback `select|YYYYMMDD|rank`, ≤64 bytes).\n  - No results → \"no news\" notice, no sheet write. Never adds filler.\n\n  **Error handling:**\n  - Partial SerpAPI failure → build from successful queries only.\n  - Total SerpAPI failure → \"Discovery Unavailable\" notice → `05b. Stop — Discovery Failure` → Workflow 04 records the incident (never a fake \"no news\" message).\n  - Sheets/Telegram failures → 3 retries, 5s waits, then stop.\n  - Unexpected errors bubble to Workflow 04 (`[ADD YOUR WORKFLOW 04 ID]`).",
+                                         "height":  832,
+                                         "width":  1072,
+                                         "color":  "#070D12"
+                                     },
+                      "type":  "n8n-nodes-base.stickyNote",
+                      "typeVersion":  1,
+                      "position":  [
+                                       -1440,
+                                       -816
+                                   ],
+                      "id":  "0986a3a6-da59-416d-913e-48427c8fdcd5",
+                      "name":  "Sticky Note4"
+                  }
+              ],
+    "connections":  {
+                        "01. Trigger — Daily 9 AM":  {
+                                                         "main":  [
+                                                                      [
+                                                                          {
+                                                                              "node":  "02. Build — SerpAPI Queries",
+                                                                              "type":  "main",
+                                                                              "index":  0
+                                                                          }
+                                                                      ]
+                                                                  ]
+                                                     },
+                        "02. Build — SerpAPI Queries":  {
+                                                            "main":  [
+                                                                         [
+                                                                             {
+                                                                                 "node":  "03. Fetch — Google News via SerpAPI",
+                                                                                 "type":  "main",
+                                                                                 "index":  0
+                                                                             }
+                                                                         ]
+                                                                     ]
+                                                        },
+                        "03. Fetch — Google News via SerpAPI":  {
+                                                                    "main":  [
+                                                                                 [
+                                                                                     {
+                                                                                         "node":  "04. Select — Top 5 Unique News",
+                                                                                         "type":  "main",
+                                                                                         "index":  0
+                                                                                     }
+                                                                                 ]
+                                                                             ]
+                                                                },
+                        "04. Select — Top 5 Unique News":  {
+                                                               "main":  [
+                                                                            [
+                                                                                {
+                                                                                    "node":  "05. Route — Complete SerpAPI Failure",
+                                                                                    "type":  "main",
+                                                                                    "index":  0
+                                                                                }
+                                                                            ]
+                                                                        ]
+                                                           },
+                        "05. Route — Complete SerpAPI Failure":  {
+                                                                     "main":  [
+                                                                                  [
+                                                                                      {
+                                                                                          "node":  "05a. Send — Discovery Unavailable",
+                                                                                          "type":  "main",
+                                                                                          "index":  0
+                                                                                      }
+                                                                                  ],
+                                                                                  [
+                                                                                      {
+                                                                                          "node":  "06. Route — Results Available",
+                                                                                          "type":  "main",
+                                                                                          "index":  0
+                                                                                      }
+                                                                                  ]
+                                                                              ]
+                                                                 },
+                        "06. Route — Results Available":  {
+                                                              "main":  [
+                                                                           [
+                                                                               {
+                                                                                   "node":  "07. Prepare — Daily News Rows",
+                                                                                   "type":  "main",
+                                                                                   "index":  0
+                                                                               }
+                                                                           ],
+                                                                           [
+                                                                               {
+                                                                                   "node":  "07b. Send — No Results Notice",
+                                                                                   "type":  "main",
+                                                                                   "index":  0
+                                                                               }
+                                                                           ]
+                                                                       ]
+                                                          },
+                        "07. Prepare — Daily News Rows":  {
+                                                              "main":  [
+                                                                           [
+                                                                               {
+                                                                                   "node":  "08. Write — Daily News",
+                                                                                   "type":  "main",
+                                                                                   "index":  0
+                                                                               }
+                                                                           ]
+                                                                       ]
+                                                          },
+                        "08. Write — Daily News":  {
+                                                       "main":  [
+                                                                    [
+                                                                        {
+                                                                            "node":  "09. Format — Telegram Digest",
+                                                                            "type":  "main",
+                                                                            "index":  0
+                                                                        }
+                                                                    ]
+                                                                ]
+                                                   },
+                        "09. Format — Telegram Digest":  {
+                                                             "main":  [
+                                                                          [
+                                                                              {
+                                                                                  "node":  "09b. Route — Telegram Button Count",
+                                                                                  "type":  "main",
+                                                                                  "index":  0
+                                                                              }
+                                                                          ]
+                                                                      ]
+                                                         },
+                        "09b. Route — Telegram Button Count":  {
+                                                                   "main":  [
+                                                                                [
+                                                                                    {
+                                                                                        "node":  "10a. Send — Telegram Digest (1 Topic)",
+                                                                                        "type":  "main",
+                                                                                        "index":  0
+                                                                                    }
+                                                                                ],
+                                                                                [
+                                                                                    {
+                                                                                        "node":  "10b. Send — Telegram Digest (2 Topics)",
+                                                                                        "type":  "main",
+                                                                                        "index":  0
+                                                                                    }
+                                                                                ],
+                                                                                [
+                                                                                    {
+                                                                                        "node":  "10c. Send — Telegram Digest (3 Topics)",
+                                                                                        "type":  "main",
+                                                                                        "index":  0
+                                                                                    }
+                                                                                ],
+                                                                                [
+                                                                                    {
+                                                                                        "node":  "10d. Send — Telegram Digest (4 Topics)",
+                                                                                        "type":  "main",
+                                                                                        "index":  0
+                                                                                    }
+                                                                                ],
+                                                                                [
+                                                                                    {
+                                                                                        "node":  "10. Send — Telegram Digest",
+                                                                                        "type":  "main",
+                                                                                        "index":  0
+                                                                                    }
+                                                                                ]
+                                                                            ]
+                                                               },
+                        "05a. Send — Discovery Unavailable":  {
+                                                                  "main":  [
+                                                                               [
+                                                                                   {
+                                                                                       "node":  "05b. Stop — Discovery Failure",
+                                                                                       "type":  "main",
+                                                                                       "index":  0
+                                                                                   }
+                                                                               ]
+                                                                           ]
+                                                              }
+                    },
+    "settings":  {
+                     "executionOrder":  "v1",
+                     "timezone":  "Asia/Manila",
+                     "saveDataErrorExecution":  "all",
+                     "saveDataSuccessExecution":  "all",
+                     "saveManualExecutions":  true,
+                     "saveExecutionProgress":  true,
+                     "executionTimeout":  900,
+                     "binaryMode":  "separate",
+                     "errorWorkflow":  "[ADD YOUR WORKFLOW 04 ID]"
+                 },
+    "staticData":  {
+                       "node:01. Trigger — Daily 9 AM":  {
+                                                             "recurrenceRules":  [
+
+                                                                                 ]
+                                                         }
+                   },
+    "pinData":  {
+
+                },
+    "meta":  null,
+    "nodeGroups":  [
+
+                   ]
+}
